@@ -13,7 +13,10 @@ public class CardDeck {
         for (CardType type : CardType.values()) {
             CardColor color = (type == CardType.CLUB || type == CardType.SPADE) ? CardColor.BLACK : CardColor.RED;
 
-            for (CardRank rank : CardRank.values()) Cards.add(new Card(color, type, rank));
+
+            for (CardRank rank : CardRank.values()) {
+                Cards.add(new Card(color, type, rank, (rank.ordinal() + 2)));
+            }
         }
     }
 

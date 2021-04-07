@@ -18,7 +18,6 @@ enum CardType {
 }
 
 enum CardRank {
-    ACE,
     TWO,
     THREE,
     FOUR,
@@ -30,7 +29,8 @@ enum CardRank {
     TEN,
     JACK,
     QUEEN,
-    KING
+    KING,
+    ACE
 }
 
 public class Card {
@@ -38,12 +38,14 @@ public class Card {
     public CardColor Color;
     public CardType Type;
     public CardRank Rank;
+    public Integer Value;
 
 
-    public Card(CardColor color, CardType type, CardRank rank ) {
+    public Card(CardColor color, CardType type, CardRank rank, Integer value ) {
         this.Color = color;
         this.Type = type;
         this.Rank = rank;
+        this.Value = value;
     }
 
     public static ItemStack getCardItem(Card card) {
@@ -70,7 +72,6 @@ public class Card {
                 cardName += "Karo";
                 break;
         }
-
         cardName += " ";
 
         switch (card.Rank) {

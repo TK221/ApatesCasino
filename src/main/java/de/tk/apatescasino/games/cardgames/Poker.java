@@ -118,7 +118,6 @@ public class Poker implements Game {
     private Integer playerOnTurn;
     private Integer currentMinBet;
     private Integer pot;
-
     BukkitRunnable turnCounter;
 
 
@@ -205,18 +204,49 @@ public class Poker implements Game {
         }, delayInSec * 20L);
     }
 
+        private void startTurnTime(int playerNumber, int delayInSec) {
+            turnCounter = (BukkitRunnable) new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (playerNumber != 0) {
+                        playerList.get(playerNumber).Player.sendMessage(ChatColor.RED + "Time is up. Your turn ended");
+                        nextPlayer();
+                    }
+                    else dealerTurn();
+                }
+            }.runTaskLater(ApatesCasino.getInstance(), (delayInSec * 20L));
+        }
 
 
     // Turn to the next player
     private void nextPlayer() {
+        turnCounter.cancel();
         playerList.get(playerOnTurn).State = PlayerPokerState.WAITING;
 
-        playerOnTurn = getNextActivePlayerNumber(playerOnTurn);
-        if (playerOnTurn == 0 && playerList.get(getNextActivePlayerNumber(playerOnTurn)).getStake().equals(currentMinBet)) dealerTurn();
-
-        for (int number = playerOnTurn; number <= maxPlayers; number++) {
-            if ()
+        for (playerOnTurn = getNextActivePlayerNumber(playerOnTurn); playerOnTurn != 0; playerOnTurn = getNextActivePlayerNumber(playerOnTurn)) {
+            if (playerList.get(playerOnTurn).getMoney() > 0) {
+                playerTurn();
+                return;
+            }
         }
+        for (PlayerProperties player : getActivePlayers()) {
+            if (!player.getStake().equals(currentMinBet) && player.getMoney() > 0) {
+                playerOnTurn = player.playerNumber;
+                playerTurn();
+                return;
+            }
+        }
+        for (PlayerProperties player : getActivePlayers()) {
+            if (player.getMoney().equals(0)) {
+                startTurnTime(0, 5);
+                return;
+            }
+        }
+        dealerTurn();
+    }
+
+    private void playerTurn() {
+
     }
 
     private void dealerTurn() {
@@ -230,6 +260,18 @@ public class Poker implements Game {
                 showedCards.add(deck.pickFirst());
             }
         }
+        else if (showedCards.size() < 5) {
+            showedCards.add(deck.pickFirst());
+        }
+        else {
+            endGame();
+        }
+    }
+
+    private void endGame() {
+        List<PlayerProperties> players = getActivePlayers();
+
+        
     }
 
     private boolean PlayerCheck(int playerNumber) {
@@ -282,6 +324,8 @@ public class Poker implements Game {
         for (int number = 1; number <= maxPlayers; number++) {
             if (playerList.containsKey(number) && playerList.get(number).State != PlayerPokerState.PREPARING) players.add(playerList.get(number));
         }
+
+        players.sort(Comparator.comparing(o -> o.playerNumber));
         return players;
     }
 
