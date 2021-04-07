@@ -1,0 +1,8 @@
+name: ApatesCasino
+version: @version@
+main: de.tk.apatescasino.ApatesCasino
+api-version: 1.16
+commands:
+  casino:
+    description: Casino Stuff
+    usage: /casino
