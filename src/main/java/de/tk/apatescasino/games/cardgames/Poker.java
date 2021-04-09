@@ -3,6 +3,7 @@ package de.tk.apatescasino.games.cardgames;
 
 import de.tk.apatescasino.ApatesCasino;
 import de.tk.apatescasino.games.*;
+import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -14,6 +15,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitScheduler;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.bukkit.Bukkit.getServer;
 
@@ -36,6 +38,18 @@ public class Poker implements Game {
         STARTING,
         ONGOING,
     }
+    private enum PokerHand {
+        HIGH_CARD,
+        PAIR,
+        TWO_PAIR,
+        THREE_OF_A_KIND,
+        STRAIGHT,
+        FLUSH,
+        FULL_HOUSE,
+        FOUR_OF_A_KIND,
+        STRAIGHT_FLUSH,
+        ROYAL_FLUSH
+    }
 
     private class PlayerProperties {
         public Player Player;
@@ -48,6 +62,8 @@ public class Poker implements Game {
         private Integer stake;
         public Card FirstCard;
         public Card SecondCard;
+        public PokerHand Hand;
+        public Integer HandScore;
         // The players current state of the game
         public PlayerPokerState State;
 
@@ -93,7 +109,6 @@ public class Poker implements Game {
 
     // Lobby which holds all the players of the game lobby
     private final Lobby lobby;
-    private Integer gameCount;
 
     // Players to be waited for a message
     private final List<UUID> messageWaitingPlayers;
@@ -271,7 +286,7 @@ public class Poker implements Game {
     private void endGame() {
         List<PlayerProperties> players = getActivePlayers();
 
-        
+
     }
 
     private boolean PlayerCheck(int playerNumber) {
@@ -296,6 +311,108 @@ public class Poker implements Game {
             if (player.State != PlayerPokerState.RAISING) player.State = PlayerPokerState.RAISING;
             return true;
         } else return false;
+    }
+
+    private void calculatePlayerHand(int playerNumber) {
+        PlayerProperties player = playerList.get(playerNumber);
+        if (player == null) return;
+
+        List<Card> allCards = new ArrayList<>(showedCards);
+        allCards.add(player.FirstCard);
+        allCards.add(player.SecondCard);
+        allCards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
+
+        List<List<Card>> sameTypeCards = getSameTypeCards(allCards);
+        List<List<Card>> sameRankCards = getSameRankCards(allCards);
+
+        List<Card> finalCards = new ArrayList<>();
+
+        // Royal FLush
+        if (sameTypeCards.stream().anyMatch(l -> l.size() >= 5)) {
+            List<Card> cards = sameTypeCards.stream().filter(l -> l.size() >= 5).findFirst().orElse(new ArrayList<>());
+            cards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
+
+            int index = CardRank.TEN.ordinal();
+
+            for (Card card : cards) {
+                if (card.Rank.ordinal() == index) {
+                    index++;
+                    finalCards.add(card);
+                }
+            }
+            if (index > CardRank.ACE.ordinal()) {
+                player.HandScore = getHandValue(finalCards, PokerHand.ROYAL_FLUSH);
+                player.Hand = PokerHand.ROYAL_FLUSH;
+                return;
+            }
+        }
+        finalCards.clear();
+
+        // Straight Flush
+        if (sameTypeCards.stream().anyMatch(l -> l.size() >= 5)) {
+            List<Card> cards = sameTypeCards.stream().filter(l -> l.size() >= 5).findFirst().orElse(new ArrayList<>());
+            cards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
+
+            int inRow = 0;
+            Card ACE = cards.stream().filter(c -> c.Rank.equals(CardRank.ACE)).findFirst().orElse(null);
+            if (ACE != null) {
+                inRow = 1;
+                finalCards.add(ACE);
+            }
+
+            for (Card card : cards) {
+                Card lastCard = finalCards.get(finalCards.size() - 1);
+
+                if ((card.Rank.equals(CardRank.TWO) && lastCard.Rank.equals(CardRank.ACE)) || card.Value.equals(lastCard.Value + 1)) {
+                    finalCards.add(card);
+                    inRow++;
+                }
+                else if (inRow >= 5 && card.Value.equals(lastCard.Value + 1)) {
+                    finalCards.remove(0);
+                    finalCards.add(card);
+                }
+                else if (inRow >= 5) {
+                    player.HandScore = getHandValue(finalCards, PokerHand.STRAIGHT_FLUSH);
+                    player.Hand = PokerHand.STRAIGHT_FLUSH;
+                    return;
+                }
+                else if (!card.Value.equals(lastCard.Value)) {
+                    finalCards.clear();
+                    finalCards.add(card);
+                    inRow = 1;
+                }
+            }
+        }
+        finalCards.clear();
+    }
+
+    private List<List<Card>> getSameTypeCards(List<Card> cardList) {
+        List<List<Card>> sameCards = new ArrayList<>();
+
+        for (CardType type : CardType.values()) {
+            sameCards.add(cardList.stream().filter(card -> card.Type.equals(type)).collect(Collectors.toList()));
+        }
+        sameCards.sort(Comparator.comparing(List::size));
+        return sameCards;
+    }
+    private List<List<Card>> getSameRankCards(List<Card> cardList) {
+        List<List<Card>> sameCards = new ArrayList<>();
+
+        for (CardRank rank : CardRank.values()) {
+            sameCards.add(cardList.stream().filter(card -> card.Rank.equals(rank)).collect(Collectors.toList()));
+        }
+        sameCards.sort(Comparator.comparing(List::size));
+        return sameCards;
+    }
+    private int getHandValue(List<Card> cards, PokerHand hand) {
+        int value = 0;
+
+        for (Card card : cards) value += card.Value;
+
+        if (hand.equals(PokerHand.STRAIGHT) || hand.equals(PokerHand.STRAIGHT_FLUSH)) {
+            if (cards.stream().anyMatch(c -> c.Rank.equals(CardRank.ACE)) && cards.stream().anyMatch(c -> c.Rank.equals(CardRank.TWO))) value -= 13;
+        }
+        return value;
     }
 
     private boolean playerBetMoney(int playerNumber, int amount) {
