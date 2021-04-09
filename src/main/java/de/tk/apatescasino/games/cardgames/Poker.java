@@ -16,6 +16,7 @@ import org.bukkit.scheduler.BukkitScheduler;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.bukkit.Bukkit.getServer;
 
@@ -285,11 +286,34 @@ public class Poker implements Game {
 
     private void endGame() {
         List<PlayerProperties> players = getActivePlayers();
+        for (PlayerProperties player : players) calculatePlayerHand(player.playerNumber);
+        players.sort(Comparator.comparing(p -> p.Hand.ordinal()));
+        Collections.reverse(players);
 
+        List<PlayerProperties> potentialPlayers = players.stream().filter(h -> h.Hand.ordinal() == players.get(0).Hand.ordinal()).sorted(Comparator.comparing(s -> s.HandScore)).collect(Collectors.toList());
+        Collections.reverse(potentialPlayers);
+        List<PlayerProperties> highestScorePlayers = potentialPlayers.stream().filter(p -> p.HandScore.equals(potentialPlayers.get(0).HandScore)).collect(Collectors.toList());
 
+        List<PlayerProperties> highestFirstCardPlayers = highestScorePlayers.stream().filter(c -> c.FirstCard.Rank.ordinal() == highestScorePlayers.get(0).FirstCard.Rank.ordinal()).sorted(Comparator.comparing(c -> c.FirstCard.Rank.ordinal())).collect(Collectors.toList());
+        Collections.reverse(highestFirstCardPlayers);
+        List<PlayerProperties> highestSecondCardPlayers = highestScorePlayers.stream().filter(c -> c.SecondCard.Rank.ordinal() == highestScorePlayers.get(0).SecondCard.Rank.ordinal()).sorted(Comparator.comparing(c -> c.SecondCard.Rank.ordinal())).collect(Collectors.toList());
+        Collections.reverse(highestSecondCardPlayers);
+
+        List<PlayerProperties> winners = new ArrayList<>();
+
+        if (highestFirstCardPlayers.get(0).FirstCard.Rank.ordinal() >= highestSecondCardPlayers.get(0).SecondCard.Rank.ordinal()) {
+            winners.addAll(highestFirstCardPlayers.stream().filter(p -> p.FirstCard.Rank.ordinal() == highestFirstCardPlayers.get(0).FirstCard.Rank.ordinal()).collect(Collectors.toList()));
+        }
+        if (highestFirstCardPlayers.get(0).FirstCard.Rank.ordinal() <= highestSecondCardPlayers.get(0).SecondCard.Rank.ordinal()){
+            winners.addAll(highestSecondCardPlayers.stream().filter(p -> p.SecondCard.Rank.ordinal() == highestSecondCardPlayers.get(0).SecondCard.Rank.ordinal()).collect(Collectors.toList()));
+        }
+
+        for (PlayerProperties player : winners) {
+            player.AddMoney(pot / winners.size());
+        }
     }
 
-    private boolean PlayerCheck(int playerNumber) {
+    private boolean playerCheck(int playerNumber) {
         PlayerProperties player = playerList.get(playerNumber);
         if (player.getStake().equals(currentMinBet)) {
             nextPlayer();
@@ -297,7 +321,7 @@ public class Poker implements Game {
         }
         else return false;
     }
-    private boolean PlayerCall(int playerNumber) {
+    private boolean playerCall(int playerNumber) {
         PlayerProperties player = playerList.get(playerNumber);
 
         if (player.getStake() < currentMinBet && playerBetMoney(playerNumber, (currentMinBet - player.getStake()))) {
@@ -305,7 +329,7 @@ public class Poker implements Game {
             return true;
         } else return false;
     }
-    private boolean PlayerRaise(int playerNumber, int amount) {
+    private boolean playerRaise(int playerNumber, int amount) {
         PlayerProperties player = playerList.get(playerNumber);
         if (playerBetMoney(playerNumber ,amount)){
             if (player.State != PlayerPokerState.RAISING) player.State = PlayerPokerState.RAISING;
