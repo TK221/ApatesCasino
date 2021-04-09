@@ -325,13 +325,14 @@ public class Poker implements Game {
         List<List<Card>> sameTypeCards = getSameTypeCards(allCards);
         List<List<Card>> sameRankCards = getSameRankCards(allCards);
 
-        List<Card> finalCards = new ArrayList<>();
+        List<Card> finalCards;
 
         // Royal FLush
         if (sameTypeCards.stream().anyMatch(l -> l.size() >= 5)) {
             List<Card> cards = sameTypeCards.stream().filter(l -> l.size() >= 5).findFirst().orElse(new ArrayList<>());
             cards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
 
+            finalCards = new ArrayList<>();
             int index = CardRank.TEN.ordinal();
 
             for (Card card : cards) {
@@ -346,45 +347,18 @@ public class Poker implements Game {
                 return;
             }
         }
-        finalCards.clear();
 
         // Straight Flush
         if (sameTypeCards.stream().anyMatch(l -> l.size() >= 5)) {
             List<Card> cards = sameTypeCards.stream().filter(l -> l.size() >= 5).findFirst().orElse(new ArrayList<>());
-            cards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
 
-            int inRow = 0;
-            Card ACE = cards.stream().filter(c -> c.Rank.equals(CardRank.ACE)).findFirst().orElse(null);
-            if (ACE != null) {
-                inRow = 1;
-                finalCards.add(ACE);
-            }
-
-            for (Card card : cards) {
-                Card lastCard = finalCards.get(finalCards.size() - 1);
-
-                if (inRow == 5 && card.Value.equals(lastCard.Value + 1)) {
-                    finalCards.remove(0);
-                    finalCards.add(card);
-                }
-                else if (inRow != 5 && ((card.Rank.equals(CardRank.TWO) && lastCard.Rank.equals(CardRank.ACE)) || card.Value.equals(lastCard.Value + 1))) {
-                    finalCards.add(card);
-                    inRow++;
-                }
-                else if (inRow != 5 && !card.Value.equals(lastCard.Value)) {
-                    finalCards.clear();
-                    finalCards.add(card);
-                    inRow = 1;
-                }
-            }
-
-            if (inRow == 5) {
+            finalCards = getHighestStraight(cards);
+            if (finalCards != null) {
                 player.HandScore = getHandValue(finalCards, PokerHand.STRAIGHT_FLUSH);
                 player.Hand = PokerHand.STRAIGHT_FLUSH;
                 return;
             }
         }
-        finalCards.clear();
 
         // Four of a kind
         if (sameRankCards.stream().anyMatch(l -> l.size() == 4)) {
@@ -410,6 +384,74 @@ public class Poker implements Game {
             player.Hand = PokerHand.FULL_HOUSE;
             return;
         }
+
+        // Flush
+        if (sameTypeCards.stream().anyMatch(l -> l.size() >= 5)) {
+            List<Card> cards = sameTypeCards.stream().filter(l -> l.size() >= 5).findFirst().orElse(new ArrayList<>());
+            cards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
+
+            if (cards.size() > 5) {
+                cards.subList(0, (cards.size() - 5)).clear();
+            }
+
+            player.HandScore = getHandValue(cards, PokerHand.FLUSH);
+            player.Hand = PokerHand.FLUSH;
+            return;
+        }
+
+        // Straight
+        if (allCards.size() >= 5) {
+            List<Card> cards = new ArrayList<>(allCards);
+
+            finalCards = getHighestStraight(cards);
+
+            if (finalCards != null) {
+                player.HandScore = getHandValue(cards, PokerHand.STRAIGHT);
+                player.Hand = PokerHand.STRAIGHT;
+                return;
+            }
+        }
+
+        // Three of a kind
+        if (sameRankCards.stream().anyMatch(l -> l.size() == 3)) {
+            List<List<Card>> threeOfAKind = sameRankCards.stream().filter(l -> l.size() == 3).sorted(Comparator.comparing(l -> l.get(0).Rank.ordinal())).collect(Collectors.toList());
+
+            finalCards = threeOfAKind.get(0);
+
+            player.HandScore = getHandValue(finalCards, PokerHand.THREE_OF_A_KIND);
+            player.Hand = PokerHand.THREE_OF_A_KIND;
+            return;
+        }
+
+        // Two Pairs
+        if (sameRankCards.stream().filter(l -> l.size() == 2).count() >= 2) {
+            List<List<Card>> pairs = sameRankCards.stream().filter(l -> l.size() == 2).sorted(Comparator.comparing(l -> l.get(0).Rank.ordinal())).collect(Collectors.toList());
+
+            finalCards = pairs.get(0);
+            finalCards.addAll(pairs.get(1));
+
+            player.HandScore = getHandValue(finalCards, PokerHand.TWO_PAIR);
+            player.Hand = PokerHand.TWO_PAIR;
+            return;
+        }
+
+        // Pair
+        if (sameRankCards.stream().anyMatch(l -> l.size() == 2)) {
+            List<List<Card>> pairs = sameRankCards.stream().filter(l -> l.size() == 2).sorted(Comparator.comparing(l -> l.get(0).Rank.ordinal())).collect(Collectors.toList());
+
+            finalCards = pairs.get(0);
+
+            player.HandScore = getHandValue(finalCards, PokerHand.PAIR);
+            player.Hand = PokerHand.PAIR;
+            return;
+        }
+
+        //High Card
+        finalCards = new ArrayList<>();
+        finalCards.add(allCards.get(0));
+
+        player.HandScore = getHandValue(finalCards, PokerHand.HIGH_CARD);
+        player.Hand = PokerHand.HIGH_CARD;
     }
 
     private List<List<Card>> getSameTypeCards(List<Card> cardList) {
@@ -429,6 +471,39 @@ public class Poker implements Game {
         }
         sameCards.sort(Comparator.comparing(List::size));
         return sameCards;
+    }
+    private List<Card> getHighestStraight(List<Card> cards) {
+        cards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
+
+        List<Card> finalCards = new ArrayList<>();
+
+        int inRow = 0;
+        Card ACE = cards.stream().filter(c -> c.Rank.equals(CardRank.ACE)).findFirst().orElse(null);
+        if (ACE != null) {
+            inRow = 1;
+            finalCards.add(ACE);
+        }
+
+        for (Card card : cards) {
+            Card lastCard = finalCards.get(finalCards.size() - 1);
+
+            if (inRow == 5 && card.Value.equals(lastCard.Value + 1)) {
+                finalCards.remove(0);
+                finalCards.add(card);
+            }
+            else if (inRow != 5 && ((card.Rank.equals(CardRank.TWO) && lastCard.Rank.equals(CardRank.ACE)) || card.Value.equals(lastCard.Value + 1))) {
+                finalCards.add(card);
+                inRow++;
+            }
+            else if (inRow != 5 && !card.Value.equals(lastCard.Value)) {
+                finalCards.clear();
+                finalCards.add(card);
+                inRow = 1;
+            }
+        }
+
+        if (inRow == 5) return finalCards;
+        else return null;
     }
     private int getHandValue(List<Card> cards, PokerHand hand) {
         int value = 0;
