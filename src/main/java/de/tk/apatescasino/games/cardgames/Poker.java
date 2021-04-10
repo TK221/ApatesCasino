@@ -228,7 +228,7 @@ public class Poker implements Game {
                         playerList.get(playerNumber).Player.sendMessage(ChatColor.RED + "Time is up. Your turn ended");
                         nextPlayer();
                     }
-                    else dealerTurn();
+                    else nextPlayer();
                 }
             }.runTaskLater(ApatesCasino.getInstance(), (delayInSec * 20L));
         }
@@ -236,7 +236,8 @@ public class Poker implements Game {
 
     // Turn to the next player
     private void nextPlayer() {
-        turnCounter.cancel();
+        setActionItemBar(playerOnTurn);
+        if (turnCounter != null) turnCounter.cancel();
         playerList.get(playerOnTurn).State = PlayerPokerState.WAITING;
 
         for (playerOnTurn = getNextActivePlayerNumber(playerOnTurn); playerOnTurn != 0; playerOnTurn = getNextActivePlayerNumber(playerOnTurn)) {
@@ -254,7 +255,7 @@ public class Poker implements Game {
         }
         for (PlayerProperties player : getActivePlayers()) {
             if (player.getMoney().equals(0)) {
-                startTurnTime(0, 5);
+                dealerTurn();
                 return;
             }
         }
@@ -262,7 +263,8 @@ public class Poker implements Game {
     }
 
     private void playerTurn() {
-
+        playerList.get(playerOnTurn).Player.sendMessage(ChatColor.GREEN + "Its now your turn");
+        startTurnTime(playerOnTurn, 30);
     }
 
     private void dealerTurn() {
@@ -275,12 +277,15 @@ public class Poker implements Game {
             for (int i = 0; i < 3; i++){
                 showedCards.add(deck.pickFirst());
             }
+            startTurnTime(0, 0);
         }
         else if (showedCards.size() < 5) {
             showedCards.add(deck.pickFirst());
+            startTurnTime(0, 0);
         }
         else {
             endGame();
+            startTurnTime(0, 20);
         }
     }
 
@@ -308,9 +313,7 @@ public class Poker implements Game {
             winners.addAll(highestSecondCardPlayers.stream().filter(p -> p.SecondCard.Rank.ordinal() == highestSecondCardPlayers.get(0).SecondCard.Rank.ordinal()).collect(Collectors.toList()));
         }
 
-        for (PlayerProperties player : winners) {
-            player.AddMoney(pot / winners.size());
-        }
+        for (PlayerProperties player : winners) player.AddMoney(pot / winners.size());
     }
 
     private boolean playerCheck(int playerNumber) {
@@ -335,6 +338,26 @@ public class Poker implements Game {
             if (player.State != PlayerPokerState.RAISING) player.State = PlayerPokerState.RAISING;
             return true;
         } else return false;
+    }
+    private void playerFold(int playerNumber) {
+        PlayerProperties player = playerList.get(playerNumber);
+        player.State = PlayerPokerState.PREPARING;
+        pot += player.getStake();
+        player.resetStake();
+
+        Inventory playerInventory = player.Player.getInventory();
+
+        playerInventory.clear(0);
+        playerInventory.clear(1);
+    }
+
+    private void setActionItemBar(int playerNumber) {
+        Inventory playerInventory = playerList.get(playerNumber).Player.getInventory();
+        for (int i = 0; i < 9; i++) if (actionItemList.containsKey(i)) playerInventory.setItem(i, actionItemList.get(i));
+    }
+    private void setBetItemBar(int playerNumber) {
+        Inventory playerInventory = playerList.get(playerNumber).Player.getInventory();
+        for (int i = 0; i < 9; i++) if (betItemList.containsKey(i)) playerInventory.setItem(i, actionItemList.get(i));
     }
 
     private void calculatePlayerHand(int playerNumber) {
@@ -611,22 +634,56 @@ public class Poker implements Game {
 
     public void PlayerAction(UUID playerID, int slot) {
         PlayerProperties player = getPlayerPropertiesByID(playerID);
+        if (player == null) return;
 
-        if (player.State == PlayerPokerState.TURN) {
+        if (player.State.equals(PlayerPokerState.TURN)) {
 
             switch (slot) {
                 case 0:
+                    if (!playerCheck(player.playerNumber)) player.Player.sendMessage( ChatColor.RED + "You must increase the stake to the current bet");
                     break;
                 case 1:
+                    if (playerCall(player.playerNumber)) player.Player.sendMessage( ChatColor.RED + "You have not enough money to do that");
                     break;
                 case 2:
+                    player.State = PlayerPokerState.RAISING;
+                    setBetItemBar(player.playerNumber);
                     break;
                 case 3:
+                    playerFold(player.playerNumber);
                     break;
                 case 8:
+                    RemovePlayer(player.playerID);
                     break;
             }
         }
+        else if (player.State.equals(PlayerPokerState.RAISING)) {
+            switch (slot) {
+                case 0:
+                    player.State = PlayerPokerState.TURN;
+                    setActionItemBar(player.playerNumber);
+                    break;
+                case 2:
+                    if (playerRaise(player.playerNumber, betAmounts[0])) player.Player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    break;
+                case 3:
+                    if (playerRaise(player.playerNumber, betAmounts[1])) player.Player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    break;
+                case 4:
+                    if (playerRaise(player.playerNumber, betAmounts[2])) player.Player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    break;
+                case 5:
+                    if (playerRaise(player.playerNumber, betAmounts[3])) player.Player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    break;
+                case 6:
+                    if (playerRaise(player.playerNumber, betAmounts[4])) player.Player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    break;
+                case 8:
+                    if (playerRaise(player.playerNumber, player.getMoney())) player.Player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    break;
+            }
+        }
+        else player.Player.sendMessage(ChatColor.RED + "Its not your turn");
     }
 
     @Override
@@ -661,7 +718,7 @@ public class Poker implements Game {
                 Inventory playerInventory = player.getInventory();
 
                 playerInventory.setItem(cards, Card.getCardItem(card));
-                for (int i = 0; i < 9; i++) if (actionItemList.containsKey(i)) playerInventory.setItem(i, actionItemList.get(i));
+                setActionItemBar(playerProperty.playerNumber);
             }
         }
         smallBlindPlayer = getNextActivePlayerNumber(smallBlindPlayer);
