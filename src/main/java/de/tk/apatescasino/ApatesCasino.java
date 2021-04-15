@@ -1,9 +1,11 @@
 package de.tk.apatescasino;
 
 import de.tk.apatescasino.games.LobbyManager;
-import de.tk.apatescasino.games.cardgames.PokerListener;
+import de.tk.apatescasino.games.cardgames.poker.PokerListener;
 import de.tk.apatescasino.games.commands.CasinoCommand;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.Objects;
 
 
 public final class ApatesCasino extends JavaPlugin {
@@ -15,11 +17,12 @@ public final class ApatesCasino extends JavaPlugin {
     @Override
     public void onEnable() {
         // Plugin startup login
+
         instance = this;
 
         getServer().getPluginManager().registerEvents(new PokerListener(lobbyManager), this);
 
-        this.getCommand("casino").setExecutor(new CasinoCommand(lobbyManager));
+        Objects.requireNonNull(this.getCommand("casino")).setExecutor(new CasinoCommand(lobbyManager));
     }
 
     @Override

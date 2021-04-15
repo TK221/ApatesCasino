@@ -1,9 +1,8 @@
-package de.tk.apatescasino.games.cardgames;
+package de.tk.apatescasino.games.cardgames.poker;
 
 import de.tk.apatescasino.games.Game;
 import de.tk.apatescasino.games.LobbyManager;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -50,7 +49,7 @@ public class PokerListener implements Listener {
         Game game = lobbyManager.getGameByPlayer(playerID);
 
         if (game instanceof Poker) {
-            ((Poker) game).onPlayerSendMessage(playerID, message);
+            ((Poker) game).OnPlayerSendMessage(playerID, message);
             event.setCancelled(true);
         }
     }
@@ -68,6 +67,10 @@ public class PokerListener implements Listener {
         UUID playerID = event.getPlayer().getUniqueId();
         event.getPlayer().getInventory().getHeldItemSlot();
         Game game = lobbyManager.getGameByPlayer(playerID);
-        if (game instanceof Poker) event.setCancelled(true);
+
+        if (game instanceof Poker) {
+            ((Poker) game).PlayerAction(playerID, event.getPlayer().getInventory().getHeldItemSlot());
+            event.setCancelled(true);
+        }
     }
 }

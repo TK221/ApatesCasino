@@ -1,37 +1,10 @@
-package de.tk.apatescasino.games.cardgames;
+package de.tk.apatescasino.games.cardgames.card;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-enum CardColor {
-    RED,
-    BLACK
-}
-
-enum CardType {
-    CLUB,
-    SPADE,
-    DIAMOND,
-    HEART
-}
-
-enum CardRank {
-    TWO,
-    THREE,
-    FOUR,
-    FIVE,
-    SIX,
-    SEVEN,
-    EIGHT,
-    NINE,
-    TEN,
-    JACK,
-    QUEEN,
-    KING,
-    ACE
-}
 
 public class Card {
 

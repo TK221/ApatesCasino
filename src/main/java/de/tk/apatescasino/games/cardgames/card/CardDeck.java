@@ -1,4 +1,4 @@
-package de.tk.apatescasino.games.cardgames;
+package de.tk.apatescasino.games.cardgames.card;
 
 import java.util.ArrayList;
 import java.util.Collections;

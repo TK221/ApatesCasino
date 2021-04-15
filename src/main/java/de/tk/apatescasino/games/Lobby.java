@@ -9,13 +9,16 @@ import java.util.UUID;
 
 public class Lobby {
 
+    public final String ID;
+
     private final int MaxPlayers;
     private final int MinPlayers;
 
     private final List<LobbyPlayer> players = new ArrayList<>();
 
 
-    public Lobby(int maxPlayers, int minPlayers) {
+    public Lobby(int maxPlayers, int minPlayers, String id) {
+        ID = id;
         MaxPlayers = maxPlayers;
         MinPlayers = minPlayers;
     }

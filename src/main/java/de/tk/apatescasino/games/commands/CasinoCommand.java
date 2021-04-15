@@ -1,17 +1,15 @@
 package de.tk.apatescasino.games.commands;
 
+import de.tk.apatescasino.games.Game;
+import de.tk.apatescasino.games.Lobby;
 import de.tk.apatescasino.games.LobbyManager;
-import de.tk.apatescasino.games.cardgames.Poker;
+import de.tk.apatescasino.games.cardgames.poker.Poker;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-
-import java.util.Locale;
-import java.util.UUID;
 
 public class CasinoCommand implements CommandExecutor {
 
@@ -32,7 +30,9 @@ public class CasinoCommand implements CommandExecutor {
                 String name = args[1];
 
                 if (lobbyManager.ActiveGames.containsKey(name)) {
+                    lobbyManager.ActiveGames.get(name).CancelGame();
                     lobbyManager.ActiveGames.remove(name);
+
                     player.sendMessage(ChatColor.GREEN + name + " successfully removed");
                 } else {
                     player.sendMessage(ChatColor.RED + "This game doesn't exist");
@@ -53,7 +53,7 @@ public class CasinoCommand implements CommandExecutor {
 
                 switch (args[1].toLowerCase()) {
                 case "poker":
-                    lobbyManager.ActiveGames.put(name, new Poker(facingBlock.getLocation(), 5, 10, 100, 2, 4));
+                    lobbyManager.ActiveGames.put(name, new Poker(name ,facingBlock.getLocation(), 10, 50, 100, 2, 4));
                     break;
 
                     default:
