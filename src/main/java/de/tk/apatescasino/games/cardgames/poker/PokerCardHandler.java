@@ -63,7 +63,7 @@ public class PokerCardHandler {
         Collections.reverse(potentialPlayers);
         List<PokerPlayerProperties> highestScorePlayers = potentialPlayers.stream().filter(p -> p.hand.HandScore.equals(potentialPlayers.get(0).hand.HandScore)).collect(Collectors.toList());
 
-        List<PokerPlayerProperties> highestFirstCardPlayers = highestScorePlayers.stream().filter(c -> c.hand.FirstCard.Rank.ordinal() == highestScorePlayers.get(0).hand.FirstCard.Rank.ordinal()).sorted(Comparator.comparing(c -> c.hand.FirstCard.Rank.ordinal())).collect(Collectors.toList());
+        List<PokerPlayerProperties> highestFirstCardPlayers = highestScorePlayers.stream().filter(p -> p.hand.FirstCard.Rank.ordinal() == highestScorePlayers.get(0).hand.FirstCard.Rank.ordinal()).sorted(Comparator.comparing(c -> c.hand.FirstCard.Rank.ordinal())).collect(Collectors.toList());
         Collections.reverse(highestFirstCardPlayers);
         List<PokerPlayerProperties> highestSecondCardPlayers = highestScorePlayers.stream().filter(p -> p.hand.SecondCard.Rank.ordinal() == highestScorePlayers.get(0).hand.SecondCard.Rank.ordinal()).sorted(Comparator.comparing(c -> c.hand.SecondCard.Rank.ordinal())).collect(Collectors.toList());
         Collections.reverse(highestSecondCardPlayers);
@@ -73,7 +73,7 @@ public class PokerCardHandler {
         if (highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal() >= highestSecondCardPlayers.get(0).hand.SecondCard.Rank.ordinal()) {
             winners.addAll(highestFirstCardPlayers.stream().filter(p -> p.hand.FirstCard.Rank.ordinal() == highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal()).collect(Collectors.toList()));
         }
-        if (highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal() <= highestSecondCardPlayers.get(0).hand.SecondCard.Rank.ordinal()){
+        if (highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal() <= highestSecondCardPlayers.get(0).hand.SecondCard.Rank.ordinal()) {
             winners.addAll(highestSecondCardPlayers.stream().filter(p -> p.hand.SecondCard.Rank.ordinal() == highestSecondCardPlayers.get(0).hand.SecondCard.Rank.ordinal()).collect(Collectors.toList()));
         }
 
@@ -229,6 +229,7 @@ public class PokerCardHandler {
         sameCards.sort(Comparator.comparing(List::size));
         return sameCards;
     }
+
     private List<List<Card>> getSameRankCards(List<Card> cardList) {
         List<List<Card>> sameCards = new ArrayList<>();
 
@@ -238,6 +239,7 @@ public class PokerCardHandler {
         sameCards.sort(Comparator.comparing(List::size));
         return sameCards;
     }
+
     private List<Card> getHighestStraight(List<Card> cards) {
         cards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
 
@@ -256,12 +258,10 @@ public class PokerCardHandler {
             if (inRow == 5 && card.Value.equals(lastCard.Value + 1)) {
                 finalCards.remove(0);
                 finalCards.add(card);
-            }
-            else if (inRow != 5 && ((card.Rank.equals(CardRank.TWO) && lastCard.Rank.equals(CardRank.ACE)) || card.Value.equals(lastCard.Value + 1))) {
+            } else if (inRow != 5 && ((card.Rank.equals(CardRank.TWO) && lastCard.Rank.equals(CardRank.ACE)) || card.Value.equals(lastCard.Value + 1))) {
                 finalCards.add(card);
                 inRow++;
-            }
-            else if (inRow != 5 && !card.Value.equals(lastCard.Value)) {
+            } else if (inRow != 5 && !card.Value.equals(lastCard.Value)) {
                 finalCards.clear();
                 finalCards.add(card);
                 inRow = 1;
@@ -271,13 +271,15 @@ public class PokerCardHandler {
         if (inRow == 5) return finalCards;
         else return null;
     }
+
     private int getHandValue(List<Card> cards, PokerHand hand) {
         int value = 0;
 
         for (Card card : cards) value += card.Value;
 
         if (hand.equals(PokerHand.STRAIGHT) || hand.equals(PokerHand.STRAIGHT_FLUSH)) {
-            if (cards.stream().anyMatch(c -> c.Rank.equals(CardRank.ACE)) && cards.stream().anyMatch(c -> c.Rank.equals(CardRank.TWO))) value -= 13;
+            if (cards.stream().anyMatch(c -> c.Rank.equals(CardRank.ACE)) && cards.stream().anyMatch(c -> c.Rank.equals(CardRank.TWO)))
+                value -= 13;
         }
         return value;
     }

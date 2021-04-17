@@ -7,6 +7,8 @@ import de.tk.apatescasino.ApatesCasino;
 import de.tk.apatescasino.games.*;
 import de.tk.apatescasino.games.cardgames.card.Card;
 import de.tk.apatescasino.games.utilities.PlayerBet;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -14,16 +16,21 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
 
 import java.util.*;
 
 import static org.bukkit.Bukkit.getServer;
 
+
+enum GameState {
+    WAITFORPLAYERS,
+    STARTING,
+    ONGOING,
+}
 
 // State of the playing player
 enum PlayerPokerState {
@@ -33,14 +40,8 @@ enum PlayerPokerState {
     RAISING,
 }
 
-enum GameState {
-    WAITFORPLAYERS,
-    STARTING,
-    ONGOING,
-}
-
 class PokerPlayerProperties {
-    public Player Player;
+    public org.bukkit.entity.Player Player;
     public UUID playerID;
     // Individual number of the player from 1 to maximum of players
     public Integer playerNumber;
@@ -50,7 +51,7 @@ class PokerPlayerProperties {
     // The players current state of the game
     public PlayerPokerState State;
 
-    public PokerPlayerProperties(Player player, Integer ID, Integer money, PlayerPokerState state ) {
+    public PokerPlayerProperties(Player player, Integer ID, Integer money, PlayerPokerState state) {
         this.Player = player;
         this.playerID = player.getUniqueId();
         this.playerNumber = ID;
@@ -95,7 +96,7 @@ public class Poker implements Game {
     private TextLine cardLine;
 
 
-    public Poker(String name, Location joinBlockPosition, int smallBlind, int bigBlind, int minMoney,int minPlayers, int maxPlayers) {
+    public Poker(String name, Location joinBlockPosition, int smallBlind, int bigBlind, int minMoney, int minPlayers, int maxPlayers) {
         messageWaitingPlayers = new ArrayList<>();
         playerList = new HashMap<>();
 
@@ -113,22 +114,28 @@ public class Poker implements Game {
 
         // Initialize action items
         actionItemList = new HashMap<Integer, ItemStack>() {{
-            put(3, ItemStackBuilder.createItemStack(Material.PINK_DYE, 1, (ChatColor.DARK_GREEN + "Check"), new String[] { "Skip to next player,", "if your stake is the minimum amount of the game" }));
-            put(4, ItemStackBuilder.createItemStack(Material.LIME_DYE, 1, (ChatColor.DARK_BLUE + "Call"), new String[] { "Raise your stake to the minimum amount of the game" }));
-            put(5, ItemStackBuilder.createItemStack(Material.LIGHT_BLUE_DYE, 1, (ChatColor.GOLD + "Raise"), new String[] { "Raise your stake" }));
-            put(6, ItemStackBuilder.createItemStack(Material.LIGHT_GRAY_DYE, 1, (ChatColor.DARK_GRAY + "Fold"), new String[] { "Throw your cards, and left this round" }));
-            put(8, ItemStackBuilder.createItemStack(Material.BARRIER, 1, (ChatColor.RED + "Leave"), new String[] { "Leave the game" }));
+            put(3, ItemStackBuilder.createItemStack(Material.PINK_DYE, 1, (ChatColor.DARK_GREEN + "Check"), new String[]{"Skip to next player,", "if your stake is the minimum amount of the game"}));
+            put(4, ItemStackBuilder.createItemStack(Material.LIME_DYE, 1, (ChatColor.DARK_BLUE + "Call"), new String[]{"Raise your stake to the minimum amount of the game"}));
+            put(5, ItemStackBuilder.createItemStack(Material.LIGHT_BLUE_DYE, 1, (ChatColor.GOLD + "Raise"), new String[]{"Raise your stake"}));
+            put(6, ItemStackBuilder.createItemStack(Material.LIGHT_GRAY_DYE, 1, (ChatColor.DARK_GRAY + "Fold"), new String[]{"Throw your cards, and left this round"}));
+            put(8, ItemStackBuilder.createItemStack(Material.BARRIER, 1, (ChatColor.RED + "Leave"), new String[]{"Leave the game"}));
         }};
         // Initialize bet items
         betItemList = new HashMap<Integer, ItemStack>() {{
-            put(0, ItemStackBuilder.createItemStack(Material.BARRIER, 1, (ChatColor.DARK_RED + "Cancel"), new String[] { "Cancel betting" }));
-            put(2, ItemStackBuilder.createItemStack(Material.COAL, 1, (ChatColor.DARK_GRAY + betHandler.BetAmounts[0].toString() + " Tokens"), new String[] { "Raise your stake by " + betHandler.BetAmounts[0].toString() + " Tokens" }));
-            put(3, ItemStackBuilder.createItemStack(Material.IRON_INGOT, 1, (ChatColor.AQUA + betHandler.BetAmounts[1].toString() + " Tokens"), new String[] { "Raise your stake by " + betHandler.BetAmounts[1].toString() + " Tokens" }));
-            put(4, ItemStackBuilder.createItemStack(Material.GOLD_INGOT, 1, (ChatColor.DARK_GREEN + betHandler.BetAmounts[2].toString() + " Tokens"), new String[] { "Raise your stake by" + betHandler.BetAmounts[2].toString() + " Tokens" }));
-            put(5, ItemStackBuilder.createItemStack(Material.DIAMOND, 1, (ChatColor.LIGHT_PURPLE + betHandler.BetAmounts[3].toString() + " Tokens"), new String[] { "Raise your stake by " + betHandler.BetAmounts[3].toString() + " Tokens" }));
-            put(6, ItemStackBuilder.createItemStack(Material.EMERALD, 1, (ChatColor.DARK_PURPLE + betHandler.BetAmounts[4].toString() + " Tokens"), new String[] { "Raise your stake by " + betHandler.BetAmounts[4].toString() + " Tokens" }));
-            put(8, ItemStackBuilder.createItemStack(Material.NETHER_STAR, 1, (ChatColor.GOLD + "All In"), new String[] { "Raise your stake by All your Tokens" }));
+            put(0, ItemStackBuilder.createItemStack(Material.BARRIER, 1, (ChatColor.DARK_RED + "Cancel"), new String[]{"Cancel betting"}));
+            put(2, ItemStackBuilder.createItemStack(Material.COAL, 1, (ChatColor.DARK_GRAY + betHandler.BetAmounts[0].toString() + " Tokens"), new String[]{"Raise your stake by " + betHandler.BetAmounts[0].toString() + " Tokens"}));
+            put(3, ItemStackBuilder.createItemStack(Material.IRON_INGOT, 1, (ChatColor.AQUA + betHandler.BetAmounts[1].toString() + " Tokens"), new String[]{"Raise your stake by " + betHandler.BetAmounts[1].toString() + " Tokens"}));
+            put(4, ItemStackBuilder.createItemStack(Material.GOLD_INGOT, 1, (ChatColor.DARK_GREEN + betHandler.BetAmounts[2].toString() + " Tokens"), new String[]{"Raise your stake by" + betHandler.BetAmounts[2].toString() + " Tokens"}));
+            put(5, ItemStackBuilder.createItemStack(Material.DIAMOND, 1, (ChatColor.LIGHT_PURPLE + betHandler.BetAmounts[3].toString() + " Tokens"), new String[]{"Raise your stake by " + betHandler.BetAmounts[3].toString() + " Tokens"}));
+            put(6, ItemStackBuilder.createItemStack(Material.EMERALD, 1, (ChatColor.DARK_PURPLE + betHandler.BetAmounts[4].toString() + " Tokens"), new String[]{"Raise your stake by " + betHandler.BetAmounts[4].toString() + " Tokens"}));
+            put(8, ItemStackBuilder.createItemStack(Material.NETHER_STAR, 1, (ChatColor.GOLD + "All In"), new String[]{"Raise your stake by All your Tokens"}));
         }};
+
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(ApatesCasino.getInstance(), () -> {
+            for (PokerPlayerProperties playerProperties : playerList.values()) {
+                setPlayerMoneyToActionBar(playerProperties);
+            }
+        }, 0L, 20L);
 
         initHologram();
     }
@@ -149,7 +156,8 @@ public class Poker implements Game {
                                 RemovePlayer(playerID);
 
                                 Player player = Bukkit.getPlayer(playerID);
-                                if (player != null) player.sendMessage(ChatColor.RED + "Sorry you took to long. You left the game!");
+                                if (player != null)
+                                    player.sendMessage(ChatColor.RED + "Sorry you took to long. You left the game!");
                             }
                         }
                         break;
@@ -173,25 +181,28 @@ public class Poker implements Game {
         }, delayInSec * 20L);
     }
 
-        private void startTurnTime(int playerNumber, int delayInSec) {
-            turnCounter = new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (playerNumber != 0) {
-                        playerList.get(playerNumber).Player.sendMessage(ChatColor.RED + "Time is up. Your turn ended");
-                        playerFold(playerNumber);
-                    }
-                    nextPlayer();
+    private void startTurnTime(int playerNumber, int delayInSec) {
+        turnCounter = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (playerNumber != 0) {
+                    playerList.get(playerNumber).Player.sendMessage(ChatColor.RED + "Time is up. Your turn ended");
+                    playerFold(playerNumber);
                 }
-            }.runTaskLater(ApatesCasino.getInstance(), (delayInSec * 20L));
-        }
+                nextPlayer();
+            }
+        }.runTaskLater(ApatesCasino.getInstance(), (delayInSec * 20L));
+    }
 
 
     // Turn to the next player
     private void nextPlayer() {
-        setActionItemBar(playerOnTurn);
         if (turnCounter != null) turnCounter.cancel();
-        playerList.get(playerOnTurn).State = PlayerPokerState.WAITING;
+
+        if (playerOnTurn != 0) {
+            setActionItemBar(playerOnTurn);
+            playerList.get(playerOnTurn).State = PlayerPokerState.WAITING;
+        }
         updateHologram();
 
         for (playerOnTurn = getNextActivePlayerNumber(playerOnTurn); playerOnTurn != 0; playerOnTurn = getNextActivePlayerNumber(playerOnTurn)) {
@@ -217,27 +228,26 @@ public class Poker implements Game {
     }
 
     private void playerTurn() {
-        playerList.get(playerOnTurn).Player.sendMessage(ChatColor.GREEN + "Its now your turn");
+        PokerPlayerProperties player = playerList.get(playerOnTurn);
+
+        player.State = PlayerPokerState.TURN;
+        player.Player.sendMessage(ChatColor.GREEN + "Its now your turn");
         startTurnTime(playerOnTurn, 30);
+        System.out.println(player.State.toString());
     }
 
     private void dealerTurn() {
-        for (PokerPlayerProperties player : getActivePlayers()) {
-            betHandler.Pot += player.bet.GetStake();
-            player.bet.ResetStake();
-        }
+        System.out.println("dealerTurn");
 
         if (cardHandler.showedCards.size() == 0) {
-            for (int i = 0; i < 3; i++){
+            for (int i = 0; i < 3; i++) {
                 cardHandler.showedCards.add(cardHandler.deck.pickFirst());
             }
             startTurnTime(0, 5);
-        }
-        else if (cardHandler.showedCards.size() < 5) {
+        } else if (cardHandler.showedCards.size() < 5) {
             cardHandler.showedCards.add(cardHandler.deck.pickFirst());
             startTurnTime(0, 5);
-        }
-        else {
+        } else {
             endGame();
             startTurnTime(0, 20);
         }
@@ -247,6 +257,11 @@ public class Poker implements Game {
 
         List<PokerPlayerProperties> winners = cardHandler.getWinners(getActivePlayers());
         for (PokerPlayerProperties player : winners) player.bet.AddMoney(betHandler.Pot / winners.size());
+
+        for (PokerPlayerProperties playerProperties : playerList.values())
+            playerProperties.State = PlayerPokerState.PREPARING;
+        System.out.println("StartGameAgain");
+        waitForGame("preparing", 20);
     }
 
     private boolean playerCheck(int playerNumber) {
@@ -254,24 +269,26 @@ public class Poker implements Game {
         if (player.bet.GetStake().equals(betHandler.CurrentMinBet)) {
             nextPlayer();
             return true;
-        }
-        else return false;
+        } else return false;
     }
+
     private boolean playerCall(int playerNumber) {
         PokerPlayerProperties player = playerList.get(playerNumber);
 
-        if (player.bet.GetStake() < betHandler.CurrentMinBet && betHandler.PlayerBetMoney(playerList.get(playerNumber).bet, (betHandler.CurrentMinBet - player.bet.GetStake()))) {
+        if (player.bet.GetStake() < betHandler.CurrentMinBet && betHandler.PlayerBetMoney(player.bet, (betHandler.CurrentMinBet - player.bet.GetStake()))) {
             nextPlayer();
             return true;
         } else return false;
     }
+
     private boolean playerRaise(int playerNumber, int amount) {
         PokerPlayerProperties player = playerList.get(playerNumber);
-        if (betHandler.PlayerBetMoney(player.bet ,amount)){
+        if (betHandler.PlayerBetMoney(player.bet, amount)) {
             if (player.State != PlayerPokerState.RAISING) player.State = PlayerPokerState.RAISING;
             return true;
         } else return false;
     }
+
     private void playerFold(int playerNumber) {
         PokerPlayerProperties player = playerList.get(playerNumber);
         player.State = PlayerPokerState.PREPARING;
@@ -286,24 +303,36 @@ public class Poker implements Game {
 
     private void setActionItemBar(int playerNumber) {
         PokerPlayerProperties playerProperty = playerList.get(playerNumber);
-        Inventory playerInventory = playerList.get(playerNumber).Player.getInventory();
+        if (playerProperty == null) return;
 
-        for (int i = 0; i < 9; i++) if (actionItemList.containsKey(i)) playerInventory.setItem(i, actionItemList.get(i));
+        PlayerInventory playerInventory = playerList.get(playerNumber).Player.getInventory();
+        clearHotBar(playerInventory);
+
+        System.out.println("ActionBar");
+        for (int i = 0; i < 9; i++)
+            if (actionItemList.containsKey(i)) playerInventory.setItem(i, actionItemList.get(i));
         playerInventory.setItem(0, Card.getCardItem(playerProperty.hand.FirstCard));
         playerInventory.setItem(1, Card.getCardItem(playerProperty.hand.SecondCard));
     }
+
     private void setBetItemBar(int playerNumber) {
-        Inventory playerInventory = playerList.get(playerNumber).Player.getInventory();
+        PlayerInventory playerInventory = playerList.get(playerNumber).Player.getInventory();
+        clearHotBar(playerInventory);
+
+        System.out.println("BetBar");
         for (int i = 0; i < 9; i++) if (betItemList.containsKey(i)) playerInventory.setItem(i, actionItemList.get(i));
     }
 
-    private void setPlayerMoneyToActionBar(int playerNumber) {
-        PokerPlayerProperties playerProperty = playerList.get(playerNumber);
-        if (playerProperty == null) return;
-        PlayerBet playerBet = playerProperty.bet;
+    private void clearHotBar(PlayerInventory playerInventory) {
+        for (int i = 0; i < 9; i++) playerInventory.clear(i);
+    }
+
+    private void setPlayerMoneyToActionBar(PokerPlayerProperties playerProperties) {
+        if (playerProperties == null) return;
+        PlayerBet playerBet = playerProperties.bet;
 
         String message = "Money: " + playerBet.GetMoney() + "  Stake: " + playerBet.GetStake();
-        playerProperty.Player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
+        playerProperties.Player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
     }
 
     private PokerPlayerProperties getPlayerPropertiesByID(UUID playerID) {
@@ -315,7 +344,8 @@ public class Poker implements Game {
 
     private int getNextActivePlayerNumber(int currentPlayerNumber) {
         for (int number = (currentPlayerNumber + 1); number < maxPlayers; number++) {
-            if (playerList.containsKey(number) && playerList.get(number).State != PlayerPokerState.PREPARING) return number;
+            if (playerList.containsKey(number) && playerList.get(number).State != PlayerPokerState.PREPARING)
+                return number;
         }
         return 0;
     }
@@ -324,7 +354,8 @@ public class Poker implements Game {
         List<PokerPlayerProperties> players = new ArrayList<>();
 
         for (int number = 1; number <= maxPlayers; number++) {
-            if (playerList.containsKey(number) && playerList.get(number).State != PlayerPokerState.PREPARING) players.add(playerList.get(number));
+            if (playerList.containsKey(number) && playerList.get(number).State != PlayerPokerState.PREPARING)
+                players.add(playerList.get(number));
         }
 
         players.sort(Comparator.comparing(o -> o.playerNumber));
@@ -336,14 +367,14 @@ public class Poker implements Game {
         hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), location);
 
         hologram.insertTextLine(0, ChatColor.BLUE + "Poker: " + lobby.ID);
-        potLine=  hologram.insertTextLine(1, "Pot: ");
+        potLine = hologram.insertTextLine(1, "Pot: ");
         cardLine = hologram.insertTextLine(2, "Cards: ");
     }
+
     private void updateHologram() {
 
-
         StringBuilder cards = new StringBuilder("| ");
-        for (int i = 2; i < cardHandler.showedCards.size() + 2; i++) {
+        for (int i = 0; i < cardHandler.showedCards.size(); i++) {
             Card card = cardHandler.showedCards.get(i);
             cards.append(card.Type.toString()).append(" ").append(card.Rank.toString()).append(" | ");
         }
@@ -366,13 +397,16 @@ public class Poker implements Game {
 
                     // Initialize player with a available number
                     for (int playerNumber = 1; playerNumber <= maxPlayers; playerNumber++) {
-                        if (!playerList.containsKey(playerNumber))
+                        if (!playerList.containsKey(playerNumber)) {
+                            System.out.println("New Player");
                             playerList.put(playerNumber, new PokerPlayerProperties(player, playerNumber, amount, PlayerPokerState.PREPARING));
+                            break;
+                        }
                     }
                     messageWaitingPlayers.remove(playerID);
                     lobby.ChangePlayerState(playerID, PlayerState.READY);
 
-                    player.sendMessage(ChatColor.GREEN +  "You are now with " + ChatColor.GOLD + amount + " Tokens" + ChatColor.GREEN + " in the game. Please wait for the next round");
+                    player.sendMessage(ChatColor.GREEN + "You are now with " + ChatColor.GOLD + amount + " Tokens" + ChatColor.GREEN + " in the game. Please wait for the next round");
                     gameState = GameState.STARTING;
                     StartGame();
                 } else {
@@ -390,63 +424,77 @@ public class Poker implements Game {
     }
 
     public void PlayerAction(UUID playerID, int slot) {
-        PokerPlayerProperties player = getPlayerPropertiesByID(playerID);
-        if (player == null) return;
+        PokerPlayerProperties playerProperties = getPlayerPropertiesByID(playerID);
+        if (playerProperties == null) return;
+        Player player = playerProperties.Player;
 
-        if (player.State.equals(PlayerPokerState.TURN)) {
+        System.out.println(playerProperties.playerNumber + " " + playerProperties.State.toString() + ": " + player.getDisplayName() + " " + slot);
+        if (playerProperties.State.equals(PlayerPokerState.TURN)) {
 
             switch (slot) {
-                case 0:
-                    if (!playerCheck(player.playerNumber)) player.Player.sendMessage( ChatColor.RED + "You must increase the stake to the current bet");
-                    break;
-                case 1:
-                    if (playerCall(player.playerNumber)) player.Player.sendMessage( ChatColor.RED + "You have not enough money to do that");
-                    break;
-                case 2:
-                    player.State = PlayerPokerState.RAISING;
-                    setBetItemBar(player.playerNumber);
-                    break;
                 case 3:
-                    playerFold(player.playerNumber);
-                    break;
-                case 8:
-                    RemovePlayer(player.playerID);
-                    break;
-            }
-        }
-        else if (player.State.equals(PlayerPokerState.RAISING)) {
-            switch (slot) {
-                case 0:
-                    player.State = PlayerPokerState.TURN;
-                    setActionItemBar(player.playerNumber);
-                    break;
-                case 2:
-                    if (playerRaise(player.playerNumber, betHandler.BetAmounts[0])) player.Player.sendMessage(ChatColor.RED + "You have not enough money to do that");
-                    break;
-                case 3:
-                    if (playerRaise(player.playerNumber, betHandler.BetAmounts[1])) player.Player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    if (!playerCheck(playerProperties.playerNumber))
+                        player.sendMessage(ChatColor.RED + "You must increase the stake to the current bet");
+                    else player.sendMessage(ChatColor.GREEN + "You checked");
                     break;
                 case 4:
-                    if (playerRaise(player.playerNumber, betHandler.BetAmounts[2])) player.Player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    if (playerCall(playerProperties.playerNumber)) {
+                        player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    } else player.sendMessage(ChatColor.GREEN + "You Called");
                     break;
                 case 5:
-                    if (playerRaise(player.playerNumber, betHandler.BetAmounts[3])) player.Player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    playerProperties.State = PlayerPokerState.RAISING;
+                    setBetItemBar(playerProperties.playerNumber);
                     break;
                 case 6:
-                    if (playerRaise(player.playerNumber, betHandler.BetAmounts[4])) player.Player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    playerFold(playerProperties.playerNumber);
                     break;
                 case 8:
-                    if (playerRaise(player.playerNumber, player.bet.GetMoney())) player.Player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    RemovePlayer(playerProperties.playerID);
+                    break;
+            }
+        } else if (playerProperties.State.equals(PlayerPokerState.RAISING)) {
+            switch (slot) {
+                case 0:
+                    playerProperties.State = PlayerPokerState.TURN;
+                    setActionItemBar(playerProperties.playerNumber);
+                    break;
+                case 2:
+                    if (playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[0]))
+                        player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    else
+                        break;
+                case 3:
+                    if (playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[1]))
+                        player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    break;
+                case 4:
+                    if (playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[2]))
+                        player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    break;
+                case 5:
+                    if (playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[3]))
+                        player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    break;
+                case 6:
+                    if (playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[4]))
+                        player.sendMessage(ChatColor.RED + "You have not enough money to do that");
+                    break;
+                case 8:
+                    if (playerRaise(playerProperties.playerNumber, playerProperties.bet.GetMoney()))
+                        player.sendMessage(ChatColor.RED + "You have not enough money to do that");
                     break;
             }
 
-            setPlayerMoneyToActionBar(player.playerNumber);
-        }
-        else player.Player.sendMessage(ChatColor.RED + "Its not your turn");
+            setPlayerMoneyToActionBar(playerProperties);
+        } else player.sendMessage(ChatColor.RED + "Its not your turn");
+
+        updateHologram();
     }
 
     @Override
     public void StartGame() {
+        System.out.println("Game started");
         if (gameState != GameState.STARTING) return;
         gameState = GameState.ONGOING;
 
@@ -468,14 +516,14 @@ public class Poker implements Game {
             playerInventory.setItem(0, Card.getCardItem(playerProperty.hand.FirstCard));
             playerInventory.setItem(1, Card.getCardItem(playerProperty.hand.SecondCard));
             setActionItemBar(playerProperty.playerNumber);
-            setPlayerMoneyToActionBar(playerProperty.playerNumber);
+            setPlayerMoneyToActionBar(playerProperty);
         }
-        betHandler.SmallBlindPlayer = getNextActivePlayerNumber(betHandler.SmallBlindPlayer);
-        betHandler.BigBlindPlayer = getNextActivePlayerNumber(betHandler.SmallBlindPlayer);
-        betHandler.PlayerBetMoney(playerList.get(betHandler.SmallBlindPlayer).bet, betHandler.SmallBlind);
-        betHandler.PlayerBetMoney(playerList.get(betHandler.BigBlindPlayer).bet, betHandler.BigBlind);
-        playerOnTurn = betHandler.BigBlindPlayer;
-
+        //betHandler.SmallBlindPlayer = getNextActivePlayerNumber(betHandler.SmallBlindPlayer);
+        //betHandler.BigBlindPlayer = getNextActivePlayerNumber(betHandler.SmallBlindPlayer);
+        //betHandler.PlayerBetMoney(playerList.get(betHandler.SmallBlindPlayer).bet, betHandler.SmallBlind);
+        //betHandler.PlayerBetMoney(playerList.get(betHandler.BigBlindPlayer).bet, betHandler.BigBlind);
+        //playerOnTurn = betHandler.BigBlindPlayer;
+        playerOnTurn = 1;
         nextPlayer();
     }
 
@@ -504,11 +552,11 @@ public class Poker implements Game {
         UUID playerID = player.getUniqueId();
 
         lobby.AddPlayer(player);
-        lobby.ChangePlayerState(playerID ,PlayerState.UNREADY);
+        lobby.ChangePlayerState(playerID, PlayerState.UNREADY);
 
         player.sendMessage(ChatColor.AQUA + "Please write how much money you bring to the table");
         messageWaitingPlayers.add(playerID);
-        waitForPlayer("setMoney" ,playerID, 20);
+        waitForPlayer("setMoney", playerID, 20);
     }
 
     @Override

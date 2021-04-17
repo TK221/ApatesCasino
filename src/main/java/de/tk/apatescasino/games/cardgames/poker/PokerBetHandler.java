@@ -24,11 +24,17 @@ public class PokerBetHandler {
         this.SmallBlindPlayer = 0;
         this.BigBlindPlayer = 0;
 
-        BetAmounts = new Integer[] {5, 10, 50, 100, 500};
+        BetAmounts = new Integer[]{5, 10, 50, 100, 500};
     }
 
     public boolean PlayerBetMoney(PlayerBet bet, int amount) {
         if (bet == null) return false;
-        return bet.TransferMoneyToStake(amount);
+
+        if (bet.TransferMoneyToStake(amount)) {
+            if (CurrentMinBet < bet.GetStake()) CurrentMinBet = bet.GetStake();
+            return true;
+        }
+        else return false;
+
     }
 }
