@@ -31,10 +31,10 @@ public class PokerBetHandler {
         if (bet == null) return false;
 
         if (bet.TransferMoneyToStake(amount)) {
+            Pot += amount;
             if (CurrentMinBet < bet.GetStake()) CurrentMinBet = bet.GetStake();
             return true;
-        }
-        else return false;
+        } else return false;
 
     }
 }

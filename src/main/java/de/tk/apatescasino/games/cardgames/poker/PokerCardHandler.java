@@ -55,7 +55,11 @@ public class PokerCardHandler {
     }
 
     public List<PokerPlayerProperties> getWinners(List<PokerPlayerProperties> players) {
-        for (PokerPlayerProperties player : players) calculatePlayerHand(player.hand);
+        for (PokerPlayerProperties player : players) {
+            calculatePlayerHand(player.hand);
+            System.out.println("Hand: " + player.hand.Hand.name());
+        }
+
         players.sort(Comparator.comparing(p -> p.hand.Hand.ordinal()));
         Collections.reverse(players);
 
@@ -63,13 +67,16 @@ public class PokerCardHandler {
         Collections.reverse(potentialPlayers);
         List<PokerPlayerProperties> highestScorePlayers = potentialPlayers.stream().filter(p -> p.hand.HandScore.equals(potentialPlayers.get(0).hand.HandScore)).collect(Collectors.toList());
 
+        System.out.println(highestScorePlayers);
+
         List<PokerPlayerProperties> highestFirstCardPlayers = highestScorePlayers.stream().filter(p -> p.hand.FirstCard.Rank.ordinal() == highestScorePlayers.get(0).hand.FirstCard.Rank.ordinal()).sorted(Comparator.comparing(c -> c.hand.FirstCard.Rank.ordinal())).collect(Collectors.toList());
         Collections.reverse(highestFirstCardPlayers);
         List<PokerPlayerProperties> highestSecondCardPlayers = highestScorePlayers.stream().filter(p -> p.hand.SecondCard.Rank.ordinal() == highestScorePlayers.get(0).hand.SecondCard.Rank.ordinal()).sorted(Comparator.comparing(c -> c.hand.SecondCard.Rank.ordinal())).collect(Collectors.toList());
         Collections.reverse(highestSecondCardPlayers);
 
         List<PokerPlayerProperties> winners = new ArrayList<>();
-
+        System.out.println("FirstCard: " + highestFirstCardPlayers);
+        System.out.println("SecondCard: " + highestSecondCardPlayers);
         if (highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal() >= highestSecondCardPlayers.get(0).hand.SecondCard.Rank.ordinal()) {
             winners.addAll(highestFirstCardPlayers.stream().filter(p -> p.hand.FirstCard.Rank.ordinal() == highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal()).collect(Collectors.toList()));
         }
@@ -253,6 +260,10 @@ public class PokerCardHandler {
         }
 
         for (Card card : cards) {
+            if (finalCards.size() == 0) {
+                finalCards.add(card);
+                continue;
+            }
             Card lastCard = finalCards.get(finalCards.size() - 1);
 
             if (inRow == 5 && card.Value.equals(lastCard.Value + 1)) {

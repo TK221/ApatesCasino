@@ -7,6 +7,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -25,12 +26,11 @@ public class PokerListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event)
-    {
+    public void onPlayerInteract(PlayerInteractEvent event) {
         Block block = event.getClickedBlock();
         Player player = event.getPlayer();
 
-        if (block != null  && event.getHand() == EquipmentSlot.HAND) {
+        if (block != null && event.getHand() == EquipmentSlot.HAND) {
             Game game = lobbyManager.getGameByJoinBlock(block.getLocation());
 
             if (game != null) {
@@ -60,6 +60,17 @@ public class PokerListener implements Listener {
 
         Game game = lobbyManager.getGameByPlayer(playerID);
         if (game instanceof Poker) event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onPlayerPickUpItem(EntityPickupItemEvent event) {
+        if (event.getEntity() instanceof Player) {
+            Player player = (Player) event.getEntity();
+            UUID playerID = player.getUniqueId();
+
+            Game game = lobbyManager.getGameByPlayer(playerID);
+            if (game instanceof Poker) event.setCancelled(true);
+        }
     }
 
     @EventHandler

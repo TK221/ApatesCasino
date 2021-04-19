@@ -107,7 +107,7 @@ public class Poker implements Game {
 
         // Initialize lobby for the players
         this.lobby = new Lobby(minPlayers, maxPlayers, name);
-        this.cardHandler = new PokerCardHandler();
+        cardHandler = new PokerCardHandler();
         this.betHandler = new PokerBetHandler(minMoney, smallBlind, bigBlind);
 
         gameState = GameState.WAITFORPLAYERS;
@@ -187,7 +187,7 @@ public class Poker implements Game {
             public void run() {
                 if (playerNumber != 0) {
                     playerList.get(playerNumber).Player.sendMessage(ChatColor.RED + "Time is up. Your turn ended");
-                    playerFold(playerNumber);
+                    //playerFold(playerNumber);
                 }
                 nextPlayer();
             }
@@ -254,14 +254,18 @@ public class Poker implements Game {
     }
 
     private void endGame() {
+        for (PokerPlayerProperties playerProperties : playerList.values()) playerProperties.bet.ResetStake();
+        turnCounter.cancel();
 
         List<PokerPlayerProperties> winners = cardHandler.getWinners(getActivePlayers());
+        System.out.println("Winners: " + winners.size());
         for (PokerPlayerProperties player : winners) player.bet.AddMoney(betHandler.Pot / winners.size());
 
         for (PokerPlayerProperties playerProperties : playerList.values())
             playerProperties.State = PlayerPokerState.PREPARING;
         System.out.println("StartGameAgain");
         waitForGame("preparing", 20);
+        gameState = GameState.STARTING;
     }
 
     private boolean playerCheck(int playerNumber) {
@@ -320,7 +324,7 @@ public class Poker implements Game {
         clearHotBar(playerInventory);
 
         System.out.println("BetBar");
-        for (int i = 0; i < 9; i++) if (betItemList.containsKey(i)) playerInventory.setItem(i, actionItemList.get(i));
+        for (int i = 0; i < 9; i++) if (betItemList.containsKey(i)) playerInventory.setItem(i, betItemList.get(i));
     }
 
     private void clearHotBar(PlayerInventory playerInventory) {
@@ -379,7 +383,7 @@ public class Poker implements Game {
             cards.append(card.Type.toString()).append(" ").append(card.Rank.toString()).append(" | ");
         }
         cardLine.setText("Cards: " + cards);
-        potLine.setText("Pot: " + ChatColor.GOLD + betHandler.Pot);
+        potLine.setText("Pot: " + ChatColor.GOLD + betHandler.Pot + " | MinBet: " + betHandler.CurrentMinBet);
     }
 
     // Actions after a player wrote a message
@@ -439,8 +443,10 @@ public class Poker implements Game {
                     break;
                 case 4:
                     if (playerCall(playerProperties.playerNumber)) {
-                        player.sendMessage(ChatColor.RED + "You have not enough money to do that");
-                    } else player.sendMessage(ChatColor.GREEN + "You Called");
+                        player.sendMessage(ChatColor.GREEN + "You Called");
+                    } else if (betHandler.CurrentMinBet.equals(playerProperties.bet.GetStake()))
+                        player.sendMessage(ChatColor.YELLOW + "You bet enough money, please check!");
+                    else player.sendMessage(ChatColor.RED + "You have not enough money to do that");
                     break;
                 case 5:
                     playerProperties.State = PlayerPokerState.RAISING;
@@ -460,28 +466,27 @@ public class Poker implements Game {
                     setActionItemBar(playerProperties.playerNumber);
                     break;
                 case 2:
-                    if (playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[0]))
+                    if (!playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[0]))
                         player.sendMessage(ChatColor.RED + "You have not enough money to do that");
-                    else
-                        break;
+                    break;
                 case 3:
-                    if (playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[1]))
+                    if (!playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[1]))
                         player.sendMessage(ChatColor.RED + "You have not enough money to do that");
                     break;
                 case 4:
-                    if (playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[2]))
+                    if (!playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[2]))
                         player.sendMessage(ChatColor.RED + "You have not enough money to do that");
                     break;
                 case 5:
-                    if (playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[3]))
+                    if (!playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[3]))
                         player.sendMessage(ChatColor.RED + "You have not enough money to do that");
                     break;
                 case 6:
-                    if (playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[4]))
+                    if (!playerRaise(playerProperties.playerNumber, betHandler.BetAmounts[4]))
                         player.sendMessage(ChatColor.RED + "You have not enough money to do that");
                     break;
                 case 8:
-                    if (playerRaise(playerProperties.playerNumber, playerProperties.bet.GetMoney()))
+                    if (!playerRaise(playerProperties.playerNumber, playerProperties.bet.GetMoney()))
                         player.sendMessage(ChatColor.RED + "You have not enough money to do that");
                     break;
             }
@@ -530,6 +535,7 @@ public class Poker implements Game {
     @Override
     public void CancelGame() {
         hologram.delete();
+        playerList.clear();
     }
 
     @Override
