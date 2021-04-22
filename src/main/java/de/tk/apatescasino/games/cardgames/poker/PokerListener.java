@@ -27,14 +27,22 @@ public class PokerListener implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        Block block = event.getClickedBlock();
         Player player = event.getPlayer();
+        UUID playerID = event.getPlayer().getUniqueId();
+        Block block = event.getClickedBlock();
+        event.getPlayer().getInventory().getHeldItemSlot();
+
+        Game game = lobbyManager.getGameByPlayer(playerID);
+
+        if (game instanceof Poker) {
+            ((Poker) game).PlayerAction(playerID, event.getPlayer().getInventory().getHeldItemSlot());
+        }
 
         if (block != null && event.getHand() == EquipmentSlot.HAND) {
-            Game game = lobbyManager.getGameByJoinBlock(block.getLocation());
+            Game newGame = lobbyManager.getGameByJoinBlock(block.getLocation());
 
-            if (game != null) {
-                if (!game.containsPlayer(player.getUniqueId())) game.AddPlayer(player);
+            if (newGame != null) {
+                if (!newGame.containsPlayer(player.getUniqueId())) newGame.AddPlayer(player);
                 else player.sendMessage(ChatColor.YELLOW + "You are already in the game");
             }
         }
@@ -80,7 +88,6 @@ public class PokerListener implements Listener {
         Game game = lobbyManager.getGameByPlayer(playerID);
 
         if (game instanceof Poker) {
-            ((Poker) game).PlayerAction(playerID, event.getPlayer().getInventory().getHeldItemSlot());
             event.setCancelled(true);
         }
     }

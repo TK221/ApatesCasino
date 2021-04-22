@@ -14,7 +14,7 @@ public class Card {
     public Integer Value;
 
 
-    public Card(CardColor color, CardType type, CardRank rank, Integer value ) {
+    public Card(CardColor color, CardType type, CardRank rank, Integer value) {
         this.Color = color;
         this.Type = type;
         this.Rank = rank;
@@ -31,67 +31,67 @@ public class Card {
         if (card.Color == CardColor.RED) cardName += ChatColor.RED;
         else cardName += ChatColor.DARK_GRAY;
 
-        switch (card.Type) {
-            case CLUB:
-                cardName += "Kreuz";
-                break;
-            case SPADE:
-                cardName += "Pik";
-                break;
-            case HEART:
-                cardName += "Herz";
-                break;
-            case DIAMOND:
-                cardName += "Karo";
-                break;
-        }
-        cardName += " ";
-
-        switch (card.Rank) {
-            case ACE:
-                cardName += "Ass";
-                break;
-            case TWO:
-                cardName += "Zwei";
-                break;
-            case THREE:
-                cardName += "Drei";
-                break;
-            case FOUR:
-                cardName += "Vier";
-                break;
-            case FIVE:
-                cardName += "Fuenf";
-                break;
-            case SIX:
-                cardName += "Sechs";
-                break;
-            case SEVEN:
-                cardName += "Sieben";
-                break;
-            case EIGHT:
-                cardName += "Acht";
-                break;
-            case NINE:
-                cardName += "Neun";
-                break;
-            case TEN:
-                cardName += "Zehn";
-                break;
-            case JACK:
-                cardName += "Bube";
-                break;
-            case QUEEN:
-                cardName += "Dame";
-                break;
-            case KING:
-                cardName += "Koenig";
-                break;
-        }
+        cardName += GetGermanType(card.Type) + " " + GetGermanRank(card.Rank) + " " + GetGermanType(card.Type);
 
         itemMeta.setDisplayName(cardName);
         cardItem.setItemMeta(itemMeta);
 
         return cardItem;
+    }
+
+    public static String GetCardColor(CardType type) {
+        if (type == CardType.CLUB || type == CardType.SPADE) return ChatColor.DARK_GRAY.toString();
+        else return ChatColor.DARK_RED.toString();
+    }
+
+    public static String GetGermanType(CardType type) {
+        String symbol = "";
+        switch (type) {
+            case CLUB:
+                symbol += ChatColor.DARK_GRAY + "♣";
+                break;
+            case SPADE:
+                symbol += ChatColor.BLACK + "♠";
+                break;
+            case HEART:
+                symbol += ChatColor.RED + "♥";
+                break;
+            case DIAMOND:
+                symbol += ChatColor.DARK_RED + "♦";
+                break;
+        }
+        return symbol += ChatColor.WHITE;
+    }
+
+    public static String GetGermanRank(CardRank rank) {
+        switch (rank) {
+            case TWO:
+                return "2";
+            case THREE:
+                return "3";
+            case FOUR:
+                return "4";
+            case FIVE:
+                return "5";
+            case SIX:
+                return "6";
+            case SEVEN:
+                return "7";
+            case EIGHT:
+                return "8";
+            case NINE:
+                return "9";
+            case TEN:
+                return "10";
+            case JACK:
+                return "Bube";
+            case QUEEN:
+                return "Dame";
+            case KING:
+                return "Koenig";
+            case ACE:
+                return "Ass";
+        }
+        return null;
     }
 }
