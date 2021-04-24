@@ -106,6 +106,7 @@ public class Poker implements Game {
     private Hologram hologram;
     private TextLine potLine;
     private TextLine cardLine;
+    private TextLine playerInformationLine;
 
 
     public Poker(String name, Location joinBlockPosition, int smallBlind, int bigBlind, int minMoney, int minPlayers, int maxPlayers) {
@@ -177,8 +178,10 @@ public class Poker implements Game {
         scheduler.scheduleSyncDelayedTask(ApatesCasino.getInstance(), () -> {
             switch (type) {
                 case "preparing":
-                    System.out.println("Game Starting");
-                    StartGame();
+                    if (playerList.size() < minPlayers) {
+                        gameState = GameState.WAITFORPLAYERS;
+                    } else StartGame();
+
                     break;
                 default:
                     break;
@@ -194,7 +197,6 @@ public class Poker implements Game {
                     playerList.get(playerNumber).Player.sendMessage(ChatColor.RED + "Deine Zeit um, dein Zug ist beendet");
                     //playerFold(playerNumber);
                 }
-                System.out.println("End turn time");
                 nextPlayer();
             }
         }.runTaskLater(ApatesCasino.getInstance(), (delayInSec * 20L));
@@ -211,7 +213,11 @@ public class Poker implements Game {
         }
         updateHologram();
 
-        if (getActivePlayers().size() == 1) dealerTurn();
+        if (getActivePlayers().size() == 1) {
+            dealerTurn();
+            return;
+        }
+
 
         for (playerOnTurn = getNextActivePlayerNumber(playerOnTurn); playerOnTurn != 0; playerOnTurn = getNextActivePlayerNumber(playerOnTurn)) {
             if (playerList.get(playerOnTurn).bet.GetMoney() > 0) {
@@ -241,23 +247,24 @@ public class Poker implements Game {
         player.State = PlayerPokerState.TURN;
         player.Player.sendMessage(ChatColor.GREEN + "Du bist am Zug");
         startTurnTime(playerOnTurn, 30);
-        System.out.println(player.State.toString());
+
+        updateHologram();
     }
 
     private void dealerTurn() {
-        //System.out.println("dealerTurn");
-
         if (cardHandler.showedCards.size() == 0) {
             for (int i = 0; i < 3; i++) {
                 cardHandler.showedCards.add(cardHandler.deck.pickFirst());
             }
-            startTurnTime(0, 1);
+            startTurnTime(0, 0);
         } else if (cardHandler.showedCards.size() < 5) {
             cardHandler.showedCards.add(cardHandler.deck.pickFirst());
-            startTurnTime(0, 1);
+            startTurnTime(0, 0);
         } else {
             endGame();
         }
+
+        updateHologram();
     }
 
     private void endGame() {
@@ -265,13 +272,16 @@ public class Poker implements Game {
         turnCounter.cancel();
 
         List<PokerPlayerProperties> winners = cardHandler.getWinners(getActivePlayers());
-        //System.out.println("Winners: " + winners.size());
+
+        String endMessage = cardHandler.GetEndMessage(getActivePlayers(), winners);
+        playerList.values().forEach(p -> p.Player.sendMessage(endMessage));
+
         for (PokerPlayerProperties player : winners) player.bet.AddMoney(betHandler.Pot / winners.size());
 
         for (PokerPlayerProperties playerProperties : playerList.values())
             playerProperties.State = PlayerPokerState.PREPARING;
-        System.out.println("StartGameAgain");
-        waitForGame("preparing", 20);
+
+        waitForGame("preparing", 5);
         gameState = GameState.STARTING;
     }
 
@@ -329,7 +339,6 @@ public class Poker implements Game {
         PlayerInventory playerInventory = playerList.get(playerNumber).Player.getInventory();
         clearHotBar(playerInventory);
 
-        //System.out.println("BetBar");
         for (int i = 0; i < 9; i++) if (betItemList.containsKey(i)) playerInventory.setItem(i, betItemList.get(i));
     }
 
@@ -379,6 +388,7 @@ public class Poker implements Game {
         hologram.insertTextLine(0, ChatColor.BLUE + "Poker: " + lobby.ID);
         potLine = hologram.insertTextLine(1, "Pot: ");
         cardLine = hologram.insertTextLine(2, "Karten: ");
+        playerInformationLine = hologram.insertTextLine(3, "Am Zug: ");
     }
 
     private void updateHologram() {
@@ -386,10 +396,11 @@ public class Poker implements Game {
         StringBuilder cards = new StringBuilder("| ");
         for (int i = 0; i < cardHandler.showedCards.size(); i++) {
             Card card = cardHandler.showedCards.get(i);
-            cards.append(Card.GetGermanType(card.Type) + " " + Card.GetCardColor(card.Type) + Card.GetGermanRank(card.Rank) + " " + Card.GetGermanType(card.Type) + ChatColor.WHITE + " | ");
+            cards.append(Card.GetTextCard(card)).append(" | ");
         }
         cardLine.setText("Karten: " + cards);
         potLine.setText("Pot: " + ChatColor.GOLD + betHandler.Pot + " | Mindesteinsatz: " + betHandler.CurrentMinBet);
+        playerInformationLine.setText("Am Zug: " + (playerOnTurn.equals(0) ? (ChatColor.AQUA + "Dealer") : playerList.get(playerOnTurn).Player.getDisplayName()));
     }
 
     // Actions after a player wrote a message
@@ -408,7 +419,7 @@ public class Poker implements Game {
                     // Initialize player with a available number
                     for (int playerNumber = 1; playerNumber <= maxPlayers; playerNumber++) {
                         if (!playerList.containsKey(playerNumber)) {
-                            System.out.println("New Player");
+
                             playerList.put(playerNumber, new PokerPlayerProperties(player, playerNumber, amount, PlayerPokerState.PREPARING));
                             break;
                         }
@@ -417,8 +428,10 @@ public class Poker implements Game {
                     lobby.ChangePlayerState(playerID, PlayerState.READY);
 
                     player.sendMessage(ChatColor.GREEN + "Du bist jetzt mit " + ChatColor.GOLD + amount + " Tokens" + ChatColor.GREEN + " im Spiel. Bitte warte auf die nächste Runde");
-                    gameState = GameState.STARTING;
-                    StartGame();
+                    if (playerList.size() >= minPlayers) {
+                        gameState = GameState.STARTING;
+                        waitForGame("preparing", 20);
+                    }
                 } else {
                     player.sendMessage(ChatColor.RED + "Du must mindestens" + ChatColor.GOLD + betHandler.MinMoney + " Tokens" + ChatColor.RED + " zum Tisch mitbringen");
                 }
@@ -439,8 +452,8 @@ public class Poker implements Game {
         Player player = playerProperties.Player;
 
         //System.out.println(playerProperties.playerNumber + " " + playerProperties.State.toString() + ": " + player.getDisplayName() + " " + slot);
-        if (playerProperties.State.equals(PlayerPokerState.TURN)) {
 
+        if (playerProperties.State.equals(PlayerPokerState.TURN)) {
             switch (slot) {
                 case 3:
                     playerCheckCall(playerProperties);
@@ -489,14 +502,21 @@ public class Poker implements Game {
             }
 
             setPlayerMoneyToActionBar(playerProperties);
-        } else player.sendMessage(ChatColor.RED + "Es ist nicht dein Zug");
+        } else {
+            if (slot == 8) {
+                RemovePlayer(playerID);
+            } else {
+                player.sendMessage(ChatColor.RED + "Es ist nicht dein Zug");
+            }
+            return;
+        }
 
         updateHologram();
     }
 
     @Override
     public void StartGame() {
-        System.out.println("Game started");
+
         if (gameState != GameState.STARTING) return;
         gameState = GameState.ONGOING;
 

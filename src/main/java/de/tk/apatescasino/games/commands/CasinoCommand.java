@@ -1,7 +1,5 @@
 package de.tk.apatescasino.games.commands;
 
-import de.tk.apatescasino.games.Game;
-import de.tk.apatescasino.games.Lobby;
 import de.tk.apatescasino.games.LobbyManager;
 import de.tk.apatescasino.games.cardgames.poker.Poker;
 import org.bukkit.ChatColor;
@@ -39,9 +37,7 @@ public class CasinoCommand implements CommandExecutor {
                     return true;
                 }
             }
-        }
-
-        else if (args.length == 3) {
+        } else if (args.length == 3) {
 
             if (args[0].equalsIgnoreCase("create")) {
                 String name = args[2];
@@ -52,15 +48,16 @@ public class CasinoCommand implements CommandExecutor {
                 }
 
                 switch (args[1].toLowerCase()) {
-                case "poker":
-                    lobbyManager.ActiveGames.put(name, new Poker(name ,facingBlock.getLocation(), 10, 50, 100, 2, 4));
-                    break;
+                    case "poker":
+                        lobbyManager.ActiveGames.put(name, new Poker(name, facingBlock.getLocation(), 10, 50, 100, 1, 4));
+                        break;
 
                     default:
                         return false;
                 }
 
-                if (lobbyManager.ActiveGames.get(name) != null) player.sendMessage(ChatColor.GREEN + name + " successfully created!");
+                if (lobbyManager.ActiveGames.get(name) != null)
+                    player.sendMessage(ChatColor.GREEN + name + " successfully created!");
             }
         }
 

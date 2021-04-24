@@ -4,6 +4,7 @@ import de.tk.apatescasino.games.cardgames.card.Card;
 import de.tk.apatescasino.games.cardgames.card.CardDeck;
 import de.tk.apatescasino.games.cardgames.card.CardRank;
 import de.tk.apatescasino.games.cardgames.card.CardType;
+import org.bukkit.ChatColor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,9 +56,24 @@ public class PokerCardHandler {
     }
 
     public List<PokerPlayerProperties> getWinners(List<PokerPlayerProperties> players) {
+        if (players.size() == 0) return null;
+
         for (PokerPlayerProperties player : players) {
             calculatePlayerHand(player.hand);
-            System.out.println("Hand: " + player.hand.Hand.name());
+
+            /*System.out.println("Hand: " + player.hand.Hand.name());
+            List<Card> allCards = new ArrayList<>(showedCards);
+            allCards.add(player.hand.FirstCard);
+            allCards.add(player.hand.SecondCard);
+            allCards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
+
+            StringBuilder cards = new StringBuilder("| ");
+            for (Card card : allCards) {
+                cards.append(Card.GetGermanType(card.Type)).append(" ").append(Card.GetCardColor(card.Type)).append(Card.GetGermanRank(card.Rank)).append(" ").append(Card.GetGermanType(card.Type)).append(ChatColor.WHITE).append(" | ");
+            }
+
+            player.Player.sendMessage("Hand: " + player.hand.Hand.name());
+            player.Player.sendMessage(cards.toString());*/
         }
 
         players.sort(Comparator.comparing(p -> p.hand.Hand.ordinal()));
@@ -67,24 +83,37 @@ public class PokerCardHandler {
         Collections.reverse(potentialPlayers);
         List<PokerPlayerProperties> highestScorePlayers = potentialPlayers.stream().filter(p -> p.hand.HandScore.equals(potentialPlayers.get(0).hand.HandScore)).collect(Collectors.toList());
 
-        System.out.println(highestScorePlayers);
-
         List<PokerPlayerProperties> highestFirstCardPlayers = highestScorePlayers.stream().filter(p -> p.hand.FirstCard.Rank.ordinal() == highestScorePlayers.get(0).hand.FirstCard.Rank.ordinal()).sorted(Comparator.comparing(c -> c.hand.FirstCard.Rank.ordinal())).collect(Collectors.toList());
         Collections.reverse(highestFirstCardPlayers);
         List<PokerPlayerProperties> highestSecondCardPlayers = highestScorePlayers.stream().filter(p -> p.hand.SecondCard.Rank.ordinal() == highestScorePlayers.get(0).hand.SecondCard.Rank.ordinal()).sorted(Comparator.comparing(c -> c.hand.SecondCard.Rank.ordinal())).collect(Collectors.toList());
         Collections.reverse(highestSecondCardPlayers);
 
         List<PokerPlayerProperties> winners = new ArrayList<>();
-        System.out.println("FirstCard: " + highestFirstCardPlayers);
-        System.out.println("SecondCard: " + highestSecondCardPlayers);
+
         if (highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal() >= highestSecondCardPlayers.get(0).hand.SecondCard.Rank.ordinal()) {
             winners.addAll(highestFirstCardPlayers.stream().filter(p -> p.hand.FirstCard.Rank.ordinal() == highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal()).collect(Collectors.toList()));
-        }
-        if (highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal() <= highestSecondCardPlayers.get(0).hand.SecondCard.Rank.ordinal()) {
+        } else if (highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal() < highestSecondCardPlayers.get(0).hand.SecondCard.Rank.ordinal()) {
             winners.addAll(highestSecondCardPlayers.stream().filter(p -> p.hand.SecondCard.Rank.ordinal() == highestSecondCardPlayers.get(0).hand.SecondCard.Rank.ordinal()).collect(Collectors.toList()));
         }
 
         return winners;
+    }
+
+    public String GetEndMessage(List<PokerPlayerProperties> activePlayers, List<PokerPlayerProperties> winners) {
+
+        activePlayers.removeIf(winners::contains);
+        activePlayers.sort(Comparator.comparing(p -> p.hand.Hand.ordinal()));
+        Collections.reverse(activePlayers);
+
+        StringBuilder message = new StringBuilder(ChatColor.GREEN + "--- Gewonnen ---\n");
+        winners.forEach(w -> message.append(ChatColor.YELLOW).append(w.Player.getDisplayName()).append(ChatColor.WHITE).append(": | ").append(Card.GetTextCard(w.hand.FirstCard)).append(" | ")
+                .append(Card.GetTextCard(w.hand.SecondCard)).append(" |").append(" - ").append(GetHandText(w.hand.Hand)));
+        message.append(ChatColor.RED).append("\n--- Verloren ---\n");
+        activePlayers.forEach(p -> message.append(ChatColor.YELLOW).append(p.Player.getDisplayName()).append(ChatColor.WHITE).append(": | ").append(Card.GetTextCard(p.hand.FirstCard)).append(" | ")
+                .append(Card.GetTextCard(p.hand.SecondCard)).append(" |").append(" - ").append(GetHandText(p.hand.Hand)));
+        message.append(ChatColor.WHITE).append("\n--- Ende ---");
+
+        return message.toString();
     }
 
     private void calculatePlayerHand(PlayerPokerHand playerHand) {
@@ -293,5 +322,44 @@ public class PokerCardHandler {
                 value -= 13;
         }
         return value;
+    }
+
+    public static String GetHandText(PokerHand hand) {
+        String message = "";
+
+        switch (hand) {
+            case HIGH_CARD:
+                message += ChatColor.DARK_AQUA + "High Card";
+                break;
+            case PAIR:
+                message += ChatColor.DARK_AQUA + "Pair";
+                break;
+            case TWO_PAIR:
+                message += ChatColor.AQUA + "Two Pair";
+                break;
+            case THREE_OF_A_KIND:
+                message += ChatColor.AQUA + "Three of a Kind";
+                break;
+            case STRAIGHT:
+                message += ChatColor.GREEN + "Straight";
+                break;
+            case FLUSH:
+                message += ChatColor.GREEN + "Flush";
+                break;
+            case FULL_HOUSE:
+                message += ChatColor.BLUE + "Full House";
+                break;
+            case FOUR_OF_A_KIND:
+                message += ChatColor.LIGHT_PURPLE + "Four od a kind";
+                break;
+            case STRAIGHT_FLUSH:
+                message += ChatColor.DARK_PURPLE + "Straight flush";
+                break;
+            case ROYAL_FLUSH:
+                message += ChatColor.DARK_RED + "Royal flush";
+                break;
+        }
+
+        return message + ChatColor.WHITE;
     }
 }

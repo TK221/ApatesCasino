@@ -31,7 +31,7 @@ public class Card {
         if (card.Color == CardColor.RED) cardName += ChatColor.RED;
         else cardName += ChatColor.DARK_GRAY;
 
-        cardName += GetGermanType(card.Type) + " " + GetGermanRank(card.Rank) + " " + GetGermanType(card.Type);
+        cardName += GetTypeSymbol(card.Type) + " " + GetGermanRank(card.Rank) + " " + GetTypeSymbol(card.Type);
 
         itemMeta.setDisplayName(cardName);
         cardItem.setItemMeta(itemMeta);
@@ -39,12 +39,16 @@ public class Card {
         return cardItem;
     }
 
+    public static String GetTextCard(Card card) {
+        return GetTypeSymbol(card.Type) + " " + GetCardColor(card.Type) + GetGermanRank(card.Rank) + " " + GetTypeSymbol(card.Type) + ChatColor.WHITE;
+    }
+
     public static String GetCardColor(CardType type) {
         if (type == CardType.CLUB || type == CardType.SPADE) return ChatColor.DARK_GRAY.toString();
         else return ChatColor.DARK_RED.toString();
     }
 
-    public static String GetGermanType(CardType type) {
+    public static String GetTypeSymbol(CardType type) {
         String symbol = "";
         switch (type) {
             case CLUB:
