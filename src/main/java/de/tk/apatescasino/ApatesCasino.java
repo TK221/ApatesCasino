@@ -3,6 +3,8 @@ package de.tk.apatescasino;
 import de.tk.apatescasino.games.LobbyManager;
 import de.tk.apatescasino.games.cardgames.poker.PokerListener;
 import de.tk.apatescasino.games.commands.CasinoCommand;
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Objects;
@@ -12,14 +14,19 @@ public final class ApatesCasino extends JavaPlugin {
 
     private static ApatesCasino instance;
 
-    public LobbyManager lobbyManager = new LobbyManager();
+    private final LobbyManager lobbyManager = new LobbyManager();
+    private static Economy econ = null;
 
     @Override
     public void onEnable() {
         // Plugin startup login
+        if (!setupEconomy()) {
+            System.out.println("");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
         instance = this;
-
         getServer().getPluginManager().registerEvents(new PokerListener(lobbyManager), this);
 
         Objects.requireNonNull(this.getCommand("casino")).setExecutor(new CasinoCommand(lobbyManager));
@@ -31,7 +38,23 @@ public final class ApatesCasino extends JavaPlugin {
         lobbyManager.ActiveGames.forEach((key, value) -> value.CancelGame());
     }
 
+    private boolean setupEconomy() {
+        if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            return false;
+        }
+        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+        if (rsp == null) {
+            return false;
+        }
+        econ = rsp.getProvider();
+        return true;
+    }
+
     public static ApatesCasino getInstance() {
         return instance;
+    }
+
+    public static Economy getEconomy() {
+        return econ;
     }
 }
