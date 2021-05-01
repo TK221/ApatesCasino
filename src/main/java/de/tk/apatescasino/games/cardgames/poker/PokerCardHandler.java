@@ -6,10 +6,7 @@ import de.tk.apatescasino.games.cardgames.card.CardRank;
 import de.tk.apatescasino.games.cardgames.card.CardType;
 import org.bukkit.ChatColor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 enum PokerHand {
@@ -55,65 +52,50 @@ public class PokerCardHandler {
         hand.SecondCard = deck.pickFirst();
     }
 
-    public List<PokerPlayerProperties> getWinners(List<PokerPlayerProperties> players) {
-        if (players.size() == 0) return null;
+    public List<List<PokerPlayerProperties>> getWinners(List<PokerPlayerProperties> players) {
+        List<List<PokerPlayerProperties>> playerWinOrder = new ArrayList<>();
 
-        for (PokerPlayerProperties player : players) {
-            calculatePlayerHand(player.hand);
+        if (players.size() == 0) return playerWinOrder;
 
-            /*System.out.println("Hand: " + player.hand.Hand.name());
-            List<Card> allCards = new ArrayList<>(showedCards);
-            allCards.add(player.hand.FirstCard);
-            allCards.add(player.hand.SecondCard);
-            allCards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
-
-            StringBuilder cards = new StringBuilder("| ");
-            for (Card card : allCards) {
-                cards.append(Card.GetGermanType(card.Type)).append(" ").append(Card.GetCardColor(card.Type)).append(Card.GetGermanRank(card.Rank)).append(" ").append(Card.GetGermanType(card.Type)).append(ChatColor.WHITE).append(" | ");
-            }
-
-            player.Player.sendMessage("Hand: " + player.hand.Hand.name());
-            player.Player.sendMessage(cards.toString());*/
-        }
+        for (PokerPlayerProperties player : players) calculatePlayerHand(player.hand);
 
         players.sort(Comparator.comparing(p -> p.hand.Hand.ordinal()));
         Collections.reverse(players);
 
-        List<PokerPlayerProperties> potentialPlayers = players.stream().filter(h -> h.hand.Hand.ordinal() == players.get(0).hand.Hand.ordinal()).sorted(Comparator.comparing(s -> s.hand.HandScore)).collect(Collectors.toList());
-        Collections.reverse(potentialPlayers);
-        List<PokerPlayerProperties> highestScorePlayers = potentialPlayers.stream().filter(p -> p.hand.HandScore.equals(potentialPlayers.get(0).hand.HandScore)).collect(Collectors.toList());
+        List<PokerHand> pokerHands = Arrays.asList(PokerHand.values());
+        Collections.reverse(pokerHands);
+        for (PokerHand pokerHand : pokerHands) {
+            List<PokerPlayerProperties> handPlayerList = new ArrayList<>();
 
-        List<PokerPlayerProperties> highestFirstCardPlayers = highestScorePlayers.stream().filter(p -> p.hand.FirstCard.Rank.ordinal() == highestScorePlayers.get(0).hand.FirstCard.Rank.ordinal()).sorted(Comparator.comparing(c -> c.hand.FirstCard.Rank.ordinal())).collect(Collectors.toList());
-        Collections.reverse(highestFirstCardPlayers);
-        List<PokerPlayerProperties> highestSecondCardPlayers = highestScorePlayers.stream().filter(p -> p.hand.SecondCard.Rank.ordinal() == highestScorePlayers.get(0).hand.SecondCard.Rank.ordinal()).sorted(Comparator.comparing(c -> c.hand.SecondCard.Rank.ordinal())).collect(Collectors.toList());
-        Collections.reverse(highestSecondCardPlayers);
+            for (PokerPlayerProperties playerProperties : players)
+                if (playerProperties.hand.Hand.equals(pokerHand)) handPlayerList.add(playerProperties);
 
-        List<PokerPlayerProperties> winners = new ArrayList<>();
+            List<List<PokerPlayerProperties>> groupedScorePlayerList = new ArrayList<>(handPlayerList.stream().collect(Collectors.groupingBy(p -> p.hand.HandScore)).values());
+            for (List<PokerPlayerProperties> scorePlayerPropertiesList : groupedScorePlayerList) {
 
-        if (highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal() >= highestSecondCardPlayers.get(0).hand.SecondCard.Rank.ordinal()) {
-            winners.addAll(highestFirstCardPlayers.stream().filter(p -> p.hand.FirstCard.Rank.ordinal() == highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal()).collect(Collectors.toList()));
-        } else if (highestFirstCardPlayers.get(0).hand.FirstCard.Rank.ordinal() < highestSecondCardPlayers.get(0).hand.SecondCard.Rank.ordinal()) {
-            winners.addAll(highestSecondCardPlayers.stream().filter(p -> p.hand.SecondCard.Rank.ordinal() == highestSecondCardPlayers.get(0).hand.SecondCard.Rank.ordinal()).collect(Collectors.toList()));
+                List<CardRank> cardRanks = Arrays.asList(CardRank.values());
+                Collections.reverse(cardRanks);
+                for (CardRank cardRank : cardRanks) {
+
+                    List<PokerPlayerProperties> cardPlayerProperties = scorePlayerPropertiesList.stream().filter(p -> p.hand.FirstCard.Rank.equals(cardRank) || p.hand.SecondCard.Rank.equals(cardRank)).collect(Collectors.toList());
+
+                    for (int i = 0; i < cardPlayerProperties.size(); i++) {
+                        PokerPlayerProperties playerProperties = cardPlayerProperties.get(i);
+                        if (playerProperties == null) continue;
+
+                        for (List<PokerPlayerProperties> playerList : playerWinOrder) {
+                            if (playerList.contains(playerProperties)) {
+                                cardPlayerProperties.remove(playerProperties);
+                            }
+                        }
+                    }
+
+                    if (cardPlayerProperties.size() > 0) playerWinOrder.add(cardPlayerProperties);
+                }
+            }
         }
 
-        return winners;
-    }
-
-    public String GetEndMessage(List<PokerPlayerProperties> activePlayers, List<PokerPlayerProperties> winners) {
-
-        activePlayers.removeIf(winners::contains);
-        activePlayers.sort(Comparator.comparing(p -> p.hand.Hand.ordinal()));
-        Collections.reverse(activePlayers);
-
-        StringBuilder message = new StringBuilder(ChatColor.GREEN + "--- Gewonnen ---\n");
-        winners.forEach(w -> message.append(ChatColor.YELLOW).append(w.Player.getDisplayName()).append(ChatColor.WHITE).append(": | ").append(Card.GetTextCard(w.hand.FirstCard)).append(" | ")
-                .append(Card.GetTextCard(w.hand.SecondCard)).append(" |").append(" - ").append(GetHandText(w.hand.Hand)));
-        message.append(ChatColor.RED).append("\n--- Verloren ---\n");
-        activePlayers.forEach(p -> message.append(ChatColor.YELLOW).append(p.Player.getDisplayName()).append(ChatColor.WHITE).append(": | ").append(Card.GetTextCard(p.hand.FirstCard)).append(" | ")
-                .append(Card.GetTextCard(p.hand.SecondCard)).append(" |").append(" - ").append(GetHandText(p.hand.Hand)));
-        message.append(ChatColor.WHITE).append("\n--- Ende ---");
-
-        return message.toString();
+        return playerWinOrder;
     }
 
     private void calculatePlayerHand(PlayerPokerHand playerHand) {
@@ -361,5 +343,9 @@ public class PokerCardHandler {
         }
 
         return message + ChatColor.WHITE;
+    }
+
+    public static String GetCardHandText(PlayerPokerHand pokerHand) {
+        return ChatColor.WHITE + "| " + Card.GetTextCard(pokerHand.FirstCard) + " | " + Card.GetTextCard(pokerHand.SecondCard) + " | - " + GetHandText(pokerHand.Hand);
     }
 }

@@ -23,6 +23,7 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.bukkit.Bukkit.getServer;
 
@@ -120,7 +121,7 @@ public class Poker implements Game {
 
         // Initialize lobby for the players
         this.lobby = new Lobby(minPlayers, maxPlayers, name);
-        cardHandler = new PokerCardHandler();
+        this.cardHandler = new PokerCardHandler();
         this.betHandler = new PokerBetHandler(minMoney, smallBlind, bigBlind);
 
         gameState = GameState.WAITFORPLAYERS;
@@ -172,9 +173,9 @@ public class Poker implements Game {
             if (playerList.size() < minPlayers) {
                 gameState = GameState.WAITFORPLAYERS;
 
-                cardLine.setText("Karten: ");
-                potLine.setText("Pot: ");
-                playerInformationLine.setText("Am Zug: ");
+                cardLine.setText("Karten:");
+                potLine.setText("Pot:");
+                playerInformationLine.setText("Am Zug:");
             } else {
                 gameCountDown();
             }
@@ -187,7 +188,15 @@ public class Poker implements Game {
             @Override
             public void run() {
                 if (countDownNumber <= 0) {
-                    StartGame();
+                    if (playerList.size() < minPlayers) {
+                        gameState = GameState.WAITFORPLAYERS;
+
+                        cardLine.setText("Karten:");
+                        potLine.setText("Pot:");
+                        playerInformationLine.setText("Am Zug:");
+                    } else {
+                        StartGame();
+                    }
                     countDown.cancel();
                 } else if (countDownNumber % 5 == 0)
                     playerList.values().forEach(p -> p.Player.sendMessage(ChatColor.YELLOW + countDownNumber.toString() + " Sekunden bis zum Start der nächsten Runde"));
@@ -203,7 +212,7 @@ public class Poker implements Game {
             public void run() {
                 if (playerNumber != 0) {
                     playerList.get(playerNumber).Player.sendMessage(ChatColor.RED + "Deine Zeit um, dein Zug ist beendet");
-                    //playerFold(playerNumber);
+                    playerFold(playerList.get(playerNumber));
                 }
                 nextPlayer();
             }
@@ -221,11 +230,11 @@ public class Poker implements Game {
         }
         updateHologram();
 
-        if (getActivePlayers().size() == 1) {
+        /*if (getActivePlayers().size() == 1) {
             playerOnTurn = 0;
             dealerTurn();
             return;
-        }
+        }*/
 
         for (playerOnTurn = getNextActivePlayerNumber(playerOnTurn); playerOnTurn != 0; playerOnTurn = getNextActivePlayerNumber(playerOnTurn)) {
             if (playerList.get(playerOnTurn).bet.GetMoney() > 0) {
@@ -261,6 +270,20 @@ public class Poker implements Game {
     }
 
     private void dealerTurn() {
+        List<PokerPlayerProperties> sidePotPlayers = getActivePlayers().stream().filter(p -> p.bet.GetMoney() <= 0).collect(Collectors.toList());
+
+        for (PokerPlayerProperties sidePlayerProperties : sidePotPlayers) {
+            int currPot = betHandler.Pot;
+            int stake = sidePlayerProperties.bet.GetStake();
+
+            for (PokerPlayerProperties playerProperties : getActivePlayers())
+                if (stake < playerProperties.bet.GetStake())
+                    currPot = currPot - (playerProperties.bet.GetStake() - stake);
+
+            System.out.println("Sidepot: " + sidePlayerProperties.Player.getDisplayName() + " - " + currPot);
+            betHandler.sidePots.put(sidePlayerProperties.playerNumber, currPot);
+        }
+
         if (cardHandler.showedCards.size() == 0) {
             for (int i = 0; i < 3; i++) {
                 cardHandler.showedCards.add(cardHandler.deck.pickFirst());
@@ -277,21 +300,69 @@ public class Poker implements Game {
     }
 
     private void endGame() {
-        for (PokerPlayerProperties playerProperties : playerList.values()) playerProperties.bet.ResetStake();
         turnCounter.cancel();
 
-        List<PokerPlayerProperties> winners = cardHandler.getWinners(getActivePlayers());
+        Map<Integer, Integer> oldPlayerBalance = new HashMap<>();
+        for (PokerPlayerProperties playerProperties : playerList.values())
+            oldPlayerBalance.put(playerProperties.playerNumber, playerProperties.bet.GetMoney());
 
-        String endMessage = cardHandler.GetEndMessage(getActivePlayers(), winners);
+        List<List<PokerPlayerProperties>> playerWinOrder = cardHandler.getWinners(getActivePlayers());
+
+        System.out.println("-----");
+        int i = 0;
+        for (List<PokerPlayerProperties> playerPropertiesList : playerWinOrder) {
+            System.out.println(i);
+            for (PokerPlayerProperties playerProperties : playerPropertiesList) {
+                System.out.println("Player " + playerProperties.Player.getDisplayName());
+            }
+            i++;
+        }
+        System.out.println("-----");
+
+        betHandler.DistributeMoney(playerWinOrder);
+        for (PokerPlayerProperties playerProperties : playerList.values()) playerProperties.bet.ResetStake();
+
+        List<PokerPlayerProperties> winners = playerWinOrder.get(0);
+
+        String endMessage = getEndMessage(winners, oldPlayerBalance);
         playerList.values().forEach(p -> p.Player.sendMessage(endMessage));
 
-        for (PokerPlayerProperties player : winners) player.bet.AddMoney(betHandler.Pot / winners.size());
+        Set<Integer> playerNumbers = new HashSet<>(playerList.keySet());
+        for (Integer playerNumber : playerNumbers) {
+            PokerPlayerProperties playerProperties = playerList.get(playerNumber);
 
-        for (PokerPlayerProperties playerProperties : playerList.values())
-            playerProperties.State = PlayerPokerState.PREPARING;
+            if (playerProperties.bet.GetMoney() <= 0) RemovePlayer(playerProperties.playerID);
+            else playerProperties.State = PlayerPokerState.PREPARING;
+        }
 
         preparingTimer();
         gameState = GameState.STARTING;
+    }
+
+    private String getEndMessage(List<PokerPlayerProperties> winners, Map<Integer, Integer> oldPlayerBalance) {
+        List<PokerPlayerProperties> activePlayers = getActivePlayers();
+
+        List<PokerPlayerProperties> otherPlayers = new ArrayList<>(playerList.values());
+        otherPlayers.removeIf(activePlayers::contains);
+
+        activePlayers.removeIf(winners::contains);
+        activePlayers.sort(Comparator.comparing(p -> p.hand.Hand.ordinal()));
+        Collections.reverse(activePlayers);
+
+        StringBuilder message = new StringBuilder(ChatColor.GREEN + "--- Gewonnen ---\n");
+        winners.forEach(w -> message.append(ChatColor.YELLOW).append(w.Player.getDisplayName()).append(": ").append(PokerCardHandler.GetCardHandText(w.hand))
+                .append(" - ").append(PokerBetHandler.getBalanceDifferenceText(w.bet.GetMoney(), oldPlayerBalance.get(w.playerNumber))));
+
+        message.append(ChatColor.RED).append("\n--- Verloren ---\n");
+        activePlayers.forEach(p -> message.append(ChatColor.YELLOW).append(p.Player.getDisplayName()).append(": ").append(PokerCardHandler.GetCardHandText(p.hand))
+                .append(" - ").append(PokerBetHandler.getBalanceDifferenceText(p.bet.GetMoney(), oldPlayerBalance.get(p.playerNumber))));
+
+        message.append(ChatColor.DARK_AQUA).append("\n--- Ausgeschieden ---\n");
+        otherPlayers.forEach(o -> message.append(ChatColor.YELLOW).append(o.Player.getDisplayName()).append(": ")
+                .append(PokerBetHandler.getBalanceDifferenceText(o.bet.GetMoney(), oldPlayerBalance.get(o.playerNumber))));
+        message.append(ChatColor.WHITE).append("\n--- Ende ---");
+
+        return message.toString();
     }
 
     private void playerCheckCall(PokerPlayerProperties playerProperties) {
@@ -455,7 +526,9 @@ public class Poker implements Game {
                     lobby.ChangePlayerState(playerID, PlayerState.READY);
 
                     player.sendMessage(ChatColor.GREEN + "Du bist jetzt mit " + ChatColor.GOLD + amount + " Tokens" + ChatColor.GREEN + " im Spiel. Bitte warte auf die nächste Runde");
-                    setWaitingItemBar(getPlayerPropertiesByID(playerID));
+
+                    PokerPlayerProperties playerProperties = getPlayerPropertiesByID(playerID);
+                    if (playerProperties != null) setWaitingItemBar(playerProperties);
 
                     if (playerList.size() >= minPlayers) {
                         gameState = GameState.STARTING;
@@ -545,14 +618,21 @@ public class Poker implements Game {
 
     @Override
     public void StartGame() {
-
         if (gameState != GameState.STARTING) return;
         gameState = GameState.ONGOING;
+
+        if (turnCounter != null) turnCounter.cancel();
+        if (countDown != null) countDown.cancel();
+
+        System.out.println("--- New Game ---");
+        playerList.values().forEach(p -> System.out.println(p.Player.getDisplayName()));
+        System.out.println("----");
 
         playerList.values().forEach(p -> p.Player.sendMessage(ChatColor.GREEN + "Die Runde startet jetzt"));
 
         playerOnTurn = 0;
         betHandler.Pot = 0;
+        betHandler.sidePots = new HashMap<>();
         betHandler.CurrentMinBet = betHandler.BigBlind;
 
         cardHandler.InitGameCardHandler();
@@ -571,14 +651,14 @@ public class Poker implements Game {
             setWaitingItemBar(playerProperty);
             setPlayerMoneyToActionBar(playerProperty);
         }
-        if (getActivePlayers().size() > 1) {
+        /*if (getActivePlayers().size() > 1) {
             betHandler.SmallBlindPlayer = getNextActivePlayerNumber(betHandler.SmallBlindPlayer);
             betHandler.BigBlindPlayer = getNextActivePlayerNumber(betHandler.SmallBlindPlayer);
             betHandler.PlayerBetMoney(playerList.get(betHandler.SmallBlindPlayer).bet, betHandler.SmallBlind);
             betHandler.PlayerBetMoney(playerList.get(betHandler.BigBlindPlayer).bet, betHandler.BigBlind);
             playerOnTurn = betHandler.BigBlindPlayer;
             playerOnTurn = 1;
-        }
+        }*/
         nextPlayer();
     }
 

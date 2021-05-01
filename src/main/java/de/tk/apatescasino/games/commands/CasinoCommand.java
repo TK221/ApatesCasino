@@ -49,7 +49,7 @@ public class CasinoCommand implements CommandExecutor {
 
                 switch (args[1].toLowerCase()) {
                     case "poker":
-                        lobbyManager.ActiveGames.put(name, new Poker(name, facingBlock.getLocation(), 10, 50, 100, 1, 4, 20, 15));
+                        lobbyManager.ActiveGames.put(name, new Poker(name, facingBlock.getLocation(), 10, 50, 100, 1, 4, 20, 5));
                         break;
 
                     default:
