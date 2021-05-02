@@ -12,6 +12,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
 import java.util.UUID;
@@ -26,6 +27,11 @@ public class PokerListener implements Listener {
     }
 
     @EventHandler
+    public void onPlayerLeave(PlayerQuitEvent event) {
+        UUID playerID = event.getPlayer().getUniqueId();
+    }
+
+    @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         UUID playerID = event.getPlayer().getUniqueId();
@@ -34,18 +40,19 @@ public class PokerListener implements Listener {
 
         Game game = lobbyManager.getGameByPlayer(playerID);
 
-        if (game instanceof Poker) {
-            ((Poker) game).PlayerAction(playerID, event.getPlayer().getInventory().getHeldItemSlot());
-        }
+        if (event.getHand() == EquipmentSlot.HAND) {
+            if (game instanceof Poker) {
+                ((Poker) game).PlayerAction(playerID, event.getPlayer().getInventory().getHeldItemSlot());
+            } else if (block != null) {
+                Game newGame = lobbyManager.getGameByJoinBlock(block.getLocation());
 
-        if (block != null && event.getHand() == EquipmentSlot.HAND) {
-            Game newGame = lobbyManager.getGameByJoinBlock(block.getLocation());
-
-            if (newGame != null) {
-                if (!newGame.containsPlayer(player.getUniqueId())) newGame.AddPlayer(player);
-                else player.sendMessage(ChatColor.YELLOW + "You are already in the game");
+                if (newGame != null) {
+                    if (!newGame.containsPlayer(player.getUniqueId())) newGame.AddPlayer(player);
+                    else player.sendMessage(ChatColor.YELLOW + "You are already in the game");
+                }
             }
         }
+
     }
 
     @EventHandler
@@ -84,7 +91,6 @@ public class PokerListener implements Listener {
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         UUID playerID = event.getPlayer().getUniqueId();
-        event.getPlayer().getInventory().getHeldItemSlot();
         Game game = lobbyManager.getGameByPlayer(playerID);
 
         if (game instanceof Poker) {

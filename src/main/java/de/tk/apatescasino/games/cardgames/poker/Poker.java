@@ -4,7 +4,10 @@ import com.gmail.filoghost.holographicdisplays.api.Hologram;
 import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 import com.gmail.filoghost.holographicdisplays.api.line.TextLine;
 import de.tk.apatescasino.ApatesCasino;
-import de.tk.apatescasino.games.*;
+import de.tk.apatescasino.games.Game;
+import de.tk.apatescasino.games.ItemStackBuilder;
+import de.tk.apatescasino.games.Lobby;
+import de.tk.apatescasino.games.PlayerState;
 import de.tk.apatescasino.games.cardgames.card.Card;
 import de.tk.apatescasino.games.utilities.PlayerBet;
 import net.md_5.bungee.api.ChatMessageType;
@@ -92,6 +95,7 @@ public class Poker implements Game {
     private final List<UUID> messageWaitingPlayers;
     // All players with their properties which are in the game
     private final Map<Integer, PokerPlayerProperties> playerList;
+    private final Map<Integer, Integer> oldPlayerBalance;
 
     // Items which are used to raise the stake by a specific amount
     private final Map<Integer, ItemStack> betItemList;
@@ -111,6 +115,7 @@ public class Poker implements Game {
     public Poker(String name, Location joinBlockPosition, int smallBlind, int bigBlind, int minMoney, int minPlayers, int maxPlayers, int turnTime, int preparingTime) {
         messageWaitingPlayers = new ArrayList<>();
         playerList = new HashMap<>();
+        oldPlayerBalance = new HashMap<>();
 
         // Initialize game-settings
         this.minPlayers = minPlayers;
@@ -128,7 +133,7 @@ public class Poker implements Game {
 
         // Initialize bet items
         betItemList = new HashMap<Integer, ItemStack>() {{
-            put(0, ItemStackBuilder.createItemStack(Material.BARRIER, 1, (ChatColor.DARK_RED + "Cancel"), new String[]{"Erhöhen abbrechen"}));
+            put(0, ItemStackBuilder.createItemStack(Material.GREEN_DYE, 1, (ChatColor.GREEN + "Fertig"), new String[]{"Erhöhen beenden"}));
             put(2, ItemStackBuilder.createItemStack(Material.COAL, 1, (ChatColor.DARK_GRAY + betHandler.BetAmounts[0].toString() + " Tokens"), new String[]{"Erhöhe deinen Einsatz um " + betHandler.BetAmounts[0] + " Tokens"}));
             put(3, ItemStackBuilder.createItemStack(Material.IRON_INGOT, 1, (ChatColor.AQUA + betHandler.BetAmounts[1].toString() + " Tokens"), new String[]{"Erhöhe deinen Einsatz um " + betHandler.BetAmounts[1] + " Tokens"}));
             put(4, ItemStackBuilder.createItemStack(Material.GOLD_INGOT, 1, (ChatColor.DARK_GREEN + betHandler.BetAmounts[2].toString() + " Tokens"), new String[]{"Erhöhe deinen Einsatz um" + betHandler.BetAmounts[2] + " Tokens"}));
@@ -142,6 +147,9 @@ public class Poker implements Game {
                 setPlayerMoneyToActionBar(playerProperties);
             }
         }, 0L, 20L);
+
+        betHandler.SmallBlindPlayer = 0;
+        betHandler.BigBlindPlayer = 0;
 
         initHologram();
     }
@@ -167,6 +175,7 @@ public class Poker implements Game {
 
     // Actions after a specific time for the general game
     private void preparingTimer() {
+        if (gameState != GameState.STARTING) return;
         BukkitScheduler scheduler = getServer().getScheduler();
         scheduler.scheduleSyncDelayedTask(ApatesCasino.getInstance(), () -> {
 
@@ -183,6 +192,7 @@ public class Poker implements Game {
     }
 
     private void gameCountDown() {
+        if (gameState != GameState.STARTING) return;
         countDownNumber = 15;
         countDown = new BukkitRunnable() {
             @Override
@@ -195,6 +205,7 @@ public class Poker implements Game {
                         potLine.setText("Pot:");
                         playerInformationLine.setText("Am Zug:");
                     } else {
+                        System.out.println(countDownNumber);
                         StartGame();
                     }
                     countDown.cancel();
@@ -202,6 +213,7 @@ public class Poker implements Game {
                     playerList.values().forEach(p -> p.Player.sendMessage(ChatColor.YELLOW + countDownNumber.toString() + " Sekunden bis zum Start der nächsten Runde"));
 
                 countDownNumber--;
+                System.out.println(countDownNumber);
             }
         }.runTaskTimer(ApatesCasino.getInstance(), 0L, 20L);
     }
@@ -211,7 +223,7 @@ public class Poker implements Game {
             @Override
             public void run() {
                 if (playerNumber != 0) {
-                    playerList.get(playerNumber).Player.sendMessage(ChatColor.RED + "Deine Zeit um, dein Zug ist beendet");
+                    playerList.get(playerNumber).Player.sendMessage(ChatColor.RED + "Deine Zeit nun um, dein Zug ist beendet");
                     playerFold(playerList.get(playerNumber));
                 }
                 nextPlayer();
@@ -230,11 +242,11 @@ public class Poker implements Game {
         }
         updateHologram();
 
-        /*if (getActivePlayers().size() == 1) {
+        if (getActivePlayers().size() == 1) {
             playerOnTurn = 0;
             dealerTurn();
             return;
-        }*/
+        }
 
         for (playerOnTurn = getNextActivePlayerNumber(playerOnTurn); playerOnTurn != 0; playerOnTurn = getNextActivePlayerNumber(playerOnTurn)) {
             if (playerList.get(playerOnTurn).bet.GetMoney() > 0) {
@@ -262,7 +274,7 @@ public class Poker implements Game {
         PokerPlayerProperties playerProperties = playerList.get(playerOnTurn);
 
         playerProperties.State = PlayerPokerState.TURN;
-        playerProperties.Player.sendMessage(ChatColor.GREEN + "Du bist am Zug");
+        playerProperties.Player.sendMessage(ChatColor.GREEN + "Du bist nun am Zug");
         setActionItemBar(playerProperties);
         startTurnTime(playerOnTurn, 30);
 
@@ -302,30 +314,34 @@ public class Poker implements Game {
     private void endGame() {
         turnCounter.cancel();
 
-        Map<Integer, Integer> oldPlayerBalance = new HashMap<>();
-        for (PokerPlayerProperties playerProperties : playerList.values())
-            oldPlayerBalance.put(playerProperties.playerNumber, playerProperties.bet.GetMoney());
-
-        List<List<PokerPlayerProperties>> playerWinOrder = cardHandler.getWinners(getActivePlayers());
-
-        System.out.println("-----");
-        int i = 0;
-        for (List<PokerPlayerProperties> playerPropertiesList : playerWinOrder) {
-            System.out.println(i);
-            for (PokerPlayerProperties playerProperties : playerPropertiesList) {
-                System.out.println("Player " + playerProperties.Player.getDisplayName());
+        if (getActivePlayers().size() != 0) {
+            for (PokerPlayerProperties playerProperties : playerList.values()) {
+                if (!oldPlayerBalance.containsKey(playerProperties.playerNumber))
+                    oldPlayerBalance.put(playerProperties.playerNumber, playerProperties.bet.GetMoney());
             }
-            i++;
+
+
+            List<List<PokerPlayerProperties>> playerWinOrder = cardHandler.getWinners(getActivePlayers());
+
+            System.out.println("-----");
+            int i = 0;
+            for (List<PokerPlayerProperties> playerPropertiesList : playerWinOrder) {
+                System.out.println(i);
+                for (PokerPlayerProperties playerProperties : playerPropertiesList) {
+                    System.out.println("Player " + playerProperties.Player.getDisplayName());
+                }
+                i++;
+            }
+            System.out.println("-----");
+
+            betHandler.DistributeMoney(playerWinOrder);
+            for (PokerPlayerProperties playerProperties : playerList.values()) playerProperties.bet.ResetStake();
+
+            List<PokerPlayerProperties> winners = playerWinOrder.get(0);
+
+            String endMessage = getEndMessage(winners, oldPlayerBalance);
+            playerList.values().forEach(p -> p.Player.sendMessage(endMessage));
         }
-        System.out.println("-----");
-
-        betHandler.DistributeMoney(playerWinOrder);
-        for (PokerPlayerProperties playerProperties : playerList.values()) playerProperties.bet.ResetStake();
-
-        List<PokerPlayerProperties> winners = playerWinOrder.get(0);
-
-        String endMessage = getEndMessage(winners, oldPlayerBalance);
-        playerList.values().forEach(p -> p.Player.sendMessage(endMessage));
 
         Set<Integer> playerNumbers = new HashSet<>(playerList.keySet());
         for (Integer playerNumber : playerNumbers) {
@@ -335,8 +351,8 @@ public class Poker implements Game {
             else playerProperties.State = PlayerPokerState.PREPARING;
         }
 
-        preparingTimer();
         gameState = GameState.STARTING;
+        preparingTimer();
     }
 
     private String getEndMessage(List<PokerPlayerProperties> winners, Map<Integer, Integer> oldPlayerBalance) {
@@ -379,6 +395,23 @@ public class Poker implements Game {
         }
     }
 
+    private void playerBetting(PokerPlayerProperties playerProperties) {
+        PlayerBet playerBet = playerProperties.bet;
+
+        if (playerBet.GetStake() < betHandler.CurrentMinBet) {
+            if (playerBet.GetMoney() > (betHandler.CurrentMinBet - playerBet.GetStake())) {
+                betHandler.PlayerBetMoney(playerBet, (betHandler.CurrentMinBet - playerBet.GetStake()));
+            } else {
+                betHandler.PlayerBetMoney(playerBet, playerBet.GetMoney());
+                nextPlayer();
+                return;
+            }
+        }
+
+        playerProperties.State = PlayerPokerState.RAISING;
+        setBetItemBar(playerProperties.playerNumber);
+    }
+
     private boolean playerRaise(PokerPlayerProperties playerProperties, int amount) {
         if (betHandler.PlayerBetMoney(playerProperties.bet, amount)) {
             if (playerProperties.State != PlayerPokerState.RAISING) playerProperties.State = PlayerPokerState.RAISING;
@@ -389,6 +422,7 @@ public class Poker implements Game {
     private void playerFold(PokerPlayerProperties playerProperties) {
         playerProperties.State = PlayerPokerState.PREPARING;
         playerProperties.bet.ResetStake();
+        setWaitingItemBar(playerProperties);
 
         if (playerOnTurn.equals(playerProperties.playerNumber)) nextPlayer();
 
@@ -406,7 +440,6 @@ public class Poker implements Game {
         else playerInventory.setItem(3, CALLITEM);
         playerInventory.setItem(4, RAISEITEM);
         playerInventory.setItem(5, FOLDITEM);
-        playerInventory.setItem(8, LEAVEITEM);
 
         playerInventory.setItem(0, Card.getCardItem(playerProperties.hand.FirstCard));
         playerInventory.setItem(1, Card.getCardItem(playerProperties.hand.SecondCard));
@@ -423,7 +456,7 @@ public class Poker implements Game {
         PlayerInventory playerInventory = playerList.get(playerProperties.playerNumber).Player.getInventory();
         clearHotBar(playerInventory);
 
-        playerInventory.setItem(8, LEAVEITEM);
+        playerInventory.setItem(0, LEAVEITEM);
 
         if (playerProperties.hand.FirstCard != null && playerProperties.hand.SecondCard != null) {
             playerInventory.setItem(0, Card.getCardItem(playerProperties.hand.FirstCard));
@@ -452,8 +485,9 @@ public class Poker implements Game {
 
     private int getNextActivePlayerNumber(int currentPlayerNumber) {
         for (int number = (currentPlayerNumber + 1); number < maxPlayers; number++) {
-            if (playerList.containsKey(number) && playerList.get(number).State != PlayerPokerState.PREPARING)
+            if (playerList.containsKey(number) && playerList.get(number).State != PlayerPokerState.PREPARING) {
                 return number;
+            }
         }
         return 0;
     }
@@ -498,51 +532,45 @@ public class Poker implements Game {
         if (player == null) return;
 
         // Get unready player with the id and check if the message with the amount of money he will bring to the table is correct and add him to the game
-        for (LobbyPlayer lobbyPlayer : lobby.getPlayersByState(PlayerState.UNREADY)) {
-            if (messageWaitingPlayers.contains(playerID) && message != null && message.matches("[0-9]+")) {
 
-                // Check for acceptable amount of money
-                int amount = Integer.parseInt(message);
-                if (amount >= betHandler.MinMoney) {
+        if (messageWaitingPlayers.contains(playerID) && message != null && message.matches("[0-9]+")) {
 
-                    Economy econ = ApatesCasino.getEconomy();
+            // Check for acceptable amount of money
+            int amount = Integer.parseInt(message);
+            if (amount >= betHandler.MinMoney) {
 
-                    if (econ.getBalance(player) < betHandler.MinMoney) {
-                        player.sendMessage(ChatColor.RED + "Du hast nicht genügend Geld um diesem Spiel beizutreten!");
-                        messageWaitingPlayers.remove(playerID);
-                        return;
-                    }
-                    econ.withdrawPlayer(player, amount);
+                Economy econ = ApatesCasino.getEconomy();
 
-                    // Initialize player with a available number
-                    for (int playerNumber = 1; playerNumber <= maxPlayers; playerNumber++) {
-                        if (!playerList.containsKey(playerNumber)) {
-
-                            playerList.put(playerNumber, new PokerPlayerProperties(player, playerNumber, amount, PlayerPokerState.PREPARING));
-                            break;
-                        }
-                    }
+                if (econ.getBalance(player) < betHandler.MinMoney) {
+                    player.sendMessage(ChatColor.RED + "Du hast nicht genügend Geld um diesem Spiel beizutreten!");
                     messageWaitingPlayers.remove(playerID);
-                    lobby.ChangePlayerState(playerID, PlayerState.READY);
-
-                    player.sendMessage(ChatColor.GREEN + "Du bist jetzt mit " + ChatColor.GOLD + amount + " Tokens" + ChatColor.GREEN + " im Spiel. Bitte warte auf die nächste Runde");
-
-                    PokerPlayerProperties playerProperties = getPlayerPropertiesByID(playerID);
-                    if (playerProperties != null) setWaitingItemBar(playerProperties);
-
-                    if (playerList.size() >= minPlayers) {
-                        gameState = GameState.STARTING;
-                        preparingTimer();
-                    }
-                } else {
-                    player.sendMessage(ChatColor.RED + "Du must mindestens" + ChatColor.GOLD + betHandler.MinMoney + " Tokens" + ChatColor.RED + " zum Tisch mitbringen");
+                    return;
                 }
+                econ.withdrawPlayer(player, amount);
+
+                // Initialize player with a available number
+                for (int playerNumber = 1; playerNumber <= maxPlayers; playerNumber++) {
+                    if (!playerList.containsKey(playerNumber)) {
+
+                        playerList.put(playerNumber, new PokerPlayerProperties(player, playerNumber, amount, PlayerPokerState.PREPARING));
+                        break;
+                    }
+                }
+                messageWaitingPlayers.remove(playerID);
+                lobby.ChangePlayerState(playerID, PlayerState.READY);
+
+                player.sendMessage(ChatColor.GREEN + "Du bist jetzt mit " + ChatColor.GOLD + amount + " Tokens" + ChatColor.GREEN + " im Spiel. Bitte warte auf die nächste Runde");
+
+                PokerPlayerProperties playerProperties = getPlayerPropertiesByID(playerID);
+                if (playerProperties != null) setWaitingItemBar(playerProperties);
             } else {
-                player.sendMessage(ChatColor.RED + "Bitte schreibe eine akzeptable Geldmenge, Der Mindesteinsatz lautet: " + ChatColor.GOLD + betHandler.MinMoney + " Tokens");
+                player.sendMessage(ChatColor.RED + "Du must mindestens" + ChatColor.GOLD + betHandler.MinMoney + " Tokens" + ChatColor.RED + " zum Tisch mitbringen");
             }
+        } else {
+            player.sendMessage(ChatColor.RED + "Bitte schreibe eine akzeptable Geldmenge, Der Mindesteinsatz lautet: " + ChatColor.GOLD + betHandler.MinMoney + " Tokens");
         }
 
-        if (lobby.getPlayersByState(PlayerState.READY).size() > minPlayers) {
+        if (playerList.size() >= minPlayers && gameState == GameState.WAITFORPLAYERS) {
             gameState = GameState.STARTING;
             preparingTimer();
         }
@@ -555,14 +583,13 @@ public class Poker implements Game {
 
         //System.out.println(playerProperties.playerNumber + " " + playerProperties.State.toString() + ": " + player.getDisplayName() + " " + slot);
 
-        if (playerProperties.State.equals(PlayerPokerState.TURN)) {
+        if (playerProperties.State.equals(PlayerPokerState.TURN) && gameState == GameState.ONGOING) {
             switch (slot) {
                 case 3:
                     playerCheckCall(playerProperties);
                     break;
                 case 4:
-                    playerProperties.State = PlayerPokerState.RAISING;
-                    setBetItemBar(playerProperties.playerNumber);
+                    playerBetting(playerProperties);
                     break;
                 case 5:
                     playerFold(playerProperties);
@@ -571,11 +598,11 @@ public class Poker implements Game {
                     RemovePlayer(playerProperties.playerID);
                     break;
             }
-        } else if (playerProperties.State.equals(PlayerPokerState.RAISING)) {
+        } else if (playerProperties.State.equals(PlayerPokerState.RAISING) && gameState == GameState.ONGOING) {
             switch (slot) {
                 case 0:
-                    playerProperties.State = PlayerPokerState.TURN;
-                    setActionItemBar(playerProperties);
+                    setWaitingItemBar(playerProperties);
+                    nextPlayer();
                     break;
                 case 2:
                     if (!playerRaise(playerProperties, betHandler.BetAmounts[0]))
@@ -600,6 +627,7 @@ public class Poker implements Game {
                 case 8:
                     if (!playerRaise(playerProperties, playerProperties.bet.GetMoney()))
                         player.sendMessage(ChatColor.RED + "Du hast nicht genügent Geld");
+                    else nextPlayer();
                     break;
             }
 
@@ -607,8 +635,6 @@ public class Poker implements Game {
         } else {
             if (slot == 8) {
                 RemovePlayer(playerID);
-            } else {
-                player.sendMessage(ChatColor.RED + "Es ist nicht dein Zug");
             }
             return;
         }
@@ -651,14 +677,22 @@ public class Poker implements Game {
             setWaitingItemBar(playerProperty);
             setPlayerMoneyToActionBar(playerProperty);
         }
-        /*if (getActivePlayers().size() > 1) {
+
+        for (PokerPlayerProperties playerProperties : playerList.values())
+            oldPlayerBalance.put(playerProperties.playerNumber, playerProperties.bet.GetMoney());
+
+        if (getActivePlayers().size() > 1) {
             betHandler.SmallBlindPlayer = getNextActivePlayerNumber(betHandler.SmallBlindPlayer);
+            if (betHandler.SmallBlindPlayer == 0) betHandler.SmallBlindPlayer = getNextActivePlayerNumber(0);
             betHandler.BigBlindPlayer = getNextActivePlayerNumber(betHandler.SmallBlindPlayer);
+            if (betHandler.BigBlindPlayer == 0) betHandler.BigBlindPlayer = getNextActivePlayerNumber(0);
+
             betHandler.PlayerBetMoney(playerList.get(betHandler.SmallBlindPlayer).bet, betHandler.SmallBlind);
             betHandler.PlayerBetMoney(playerList.get(betHandler.BigBlindPlayer).bet, betHandler.BigBlind);
             playerOnTurn = betHandler.BigBlindPlayer;
             playerOnTurn = 1;
-        }*/
+        }
+
         nextPlayer();
     }
 
@@ -715,7 +749,11 @@ public class Poker implements Game {
                 clearHotBar(playerProperties.Player.getInventory());
                 playerProperties.Player.sendMessage(ChatColor.RED + "Du hast die Runde verlassen");
             }
+
             playerList.remove(playerProperties.playerNumber);
+
+            PlayerPokerState playerState = playerProperties.State;
+            if (playerState.equals(PlayerPokerState.TURN) || playerState.equals(PlayerPokerState.RAISING)) nextPlayer();
         }
 
         lobby.RemovePlayer(playerID);
