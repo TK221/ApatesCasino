@@ -1,32 +1,56 @@
 package de.tk.apatescasino.games.cardgames.blackjack;
 
+import de.tk.apatescasino.ApatesCasino;
 import de.tk.apatescasino.games.Game;
+import de.tk.apatescasino.games.ItemStackBuilder;
 import de.tk.apatescasino.games.Lobby;
+import de.tk.apatescasino.games.PlayerState;
+import de.tk.apatescasino.games.cardgames.card.Card;
 import de.tk.apatescasino.games.cardgames.card.CardDeck;
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class BlackJack implements Game {
 
     private final int minPlayers;
     private final int maxPlayers;
+    private final Location joinBlockPosition;
 
-    private final Map<UUID, BlackJackPlayer> players;
+    private final ItemStack HIT_ITEM = ItemStackBuilder.createItemStack(Material.PINK_DYE, 1, (ChatColor.DARK_GREEN + "HIT"), new String[]{"Hole eine weitere Karte"});
+    private final ItemStack STAND_ITEM = ItemStackBuilder.createItemStack(Material.LIME_DYE, 1, (ChatColor.DARK_BLUE + "STAND"), new String[]{"Beende deinen Zug"});
+    private final ItemStack LEAVE_ITEM = ItemStackBuilder.createItemStack(Material.BARRIER, 1, (ChatColor.RED + "Leave"), new String[]{"Verlasse das Spiel"});
+
+    private final Economy economy;
+
+    private Integer currentPlayer;
+    private BukkitRunnable turnTimer;
+
+
+    private final Map<UUID, BlackJackPlayer> playerMap;
     private final Lobby lobby;
 
     private final CardDeck cardDeck;
+    private final List<Card> croupierCards;
 
-    public BlackJack(String id, int minPlayers, int maxPlayers) {
+    public BlackJack(String id, int minPlayers, int maxPlayers, Location joinBlockPosition) {
         this.minPlayers = minPlayers;
         this.maxPlayers = maxPlayers;
+        this.joinBlockPosition = joinBlockPosition;
         this.lobby = new Lobby(maxPlayers, minPlayers, id);
 
-        players = new HashMap<>();
+        playerMap = new HashMap<>();
         cardDeck = new CardDeck();
+        economy = ApatesCasino.getEconomy();
+        croupierCards = new ArrayList<>();
     }
 
 
@@ -39,10 +63,40 @@ public class BlackJack implements Game {
     }
 
     private void startNewGame() {
+
         cardDeck.InitStandardDeck();
+        cardDeck.ShuffleDeck();
+
+        for (BlackJackPlayer player : playerMap.values()) player.AddCard(cardDeck.pickFirst());
+        croupierCards.add(cardDeck.pickFirst());
+        for (BlackJackPlayer player : playerMap.values()) player.AddCard(cardDeck.pickFirst());
+
+        currentPlayer = 0;
+        nextPlayer();
     }
 
-    public void PlayerAction() {
+    private void nextPlayer() {
+        BlackJackPlayer player = getPlayerByNumber(currentPlayer);
+        if (player != null) player.state = BlackJackPlayerState.IN_GAME;
+
+        BlackJackPlayer nextPlayer = getNextPlayer();
+        if (nextPlayer != null) {
+            nextPlayer.state = BlackJackPlayerState.BETTING;
+            playerTurn();
+        } else {
+            dealerTurn();
+        }
+    }
+
+    private void playerTurn() {
+
+    }
+
+    private void dealerTurn() {
+
+    }
+
+    public void PlayerAction(UUID playerID) {
 
     }
 
@@ -50,12 +104,46 @@ public class BlackJack implements Game {
 
     }
 
-    private void playerRest() {
+    private void playerStand() {
 
     }
 
     private void playerBust() {
 
+    }
+
+    private void setWaitingBar(BlackJackPlayer player) {
+        PlayerInventory playerInventory = player.Player.getInventory();
+
+        playerInventory.setItem(4, HIT_ITEM);
+        playerInventory.setItem(5, STAND_ITEM);
+    }
+
+    private void setBettingBar(BlackJackPlayer player) {
+        PlayerInventory playerInventory = player.Player.getInventory();
+
+        playerInventory.setItem(8, LEAVE_ITEM);
+    }
+
+    private List<BlackJackPlayer> getActivePlayers() {
+        return playerMap.values().stream().filter(p -> !p.state.equals(BlackJackPlayerState.IN_GAME)).collect(Collectors.toList());
+    }
+
+    private BlackJackPlayer getPlayerByNumber(Integer playerNumber) {
+        return playerMap.values().stream().filter(p -> p.PlayerNumber.equals(playerNumber)).findFirst().orElse(null);
+    }
+
+    private BlackJackPlayer getNextPlayer() {
+        List<BlackJackPlayer> players = getActivePlayers();
+
+        for (int i = currentPlayer; i <= maxPlayers; i++) {
+            int number = i;
+
+            BlackJackPlayer player = players.stream().filter(p -> p.PlayerNumber.equals(number)).findFirst().orElse(null);
+            if (player != null) return player;
+        }
+
+        return null;
     }
 
     @Override
@@ -70,31 +158,69 @@ public class BlackJack implements Game {
 
     @Override
     public Location getJoinBlockPosition() {
-        return null;
+        return joinBlockPosition;
     }
 
     @Override
     public Integer getMaxPlayers() {
-        return null;
+        return minPlayers;
     }
 
     @Override
     public Integer getMinPlayers() {
-        return null;
+        return maxPlayers;
     }
 
     @Override
     public void AddPlayer(Player player) {
+        UUID playerID = player.getUniqueId();
 
+        // Reject player to specific conditions
+        if (playerMap.containsKey(playerID)) {
+            player.sendMessage(ChatColor.YELLOW + "Du bist bereits mitglied dieses Spiels");
+            return;
+        } else if (playerMap.size() >= maxPlayers) {
+            player.sendMessage(ChatColor.RED + "Das Spiel besitz bereits die maximale Anzahl an Spielern");
+            return;
+        } else if (economy.getBalance(player) <= 0) {
+            player.sendMessage(ChatColor.RED + "Du hast leider nicht genügend Geld, um diesem Spiel beizutreten");
+            return;
+        }
+
+        // Get Free player number
+        int playerNumber = 0;
+        for (int i = 1; i <= maxPlayers; i++) {
+            int number = i;
+            if (playerMap.values().stream().noneMatch(p -> p.PlayerNumber.equals(number))) {
+                playerNumber = number;
+                break;
+            }
+        }
+
+        // Add player to lobby
+        lobby.AddPlayer(player);
+        lobby.ChangePlayerState(playerID, PlayerState.INGAME);
+
+        // Send failure message
+        if (playerNumber == 0) {
+            player.sendMessage(ChatColor.RED + "Beim betreten dieses Spiels ist etwas schief gelaufen");
+        }
+
+        // Create Player
+        playerMap.put(playerID, new BlackJackPlayer(player, playerNumber));
+
+        player.sendMessage(ChatColor.GREEN + "Du bist nun mitglied dieses Spiels");
     }
 
     @Override
     public void RemovePlayer(UUID playerID) {
 
+        playerMap.remove(playerID);
+        lobby.RemovePlayer(playerID);
     }
 
     @Override
     public boolean containsPlayer(UUID playerID) {
-        return false;
+        return playerMap.containsKey(playerID);
     }
 }

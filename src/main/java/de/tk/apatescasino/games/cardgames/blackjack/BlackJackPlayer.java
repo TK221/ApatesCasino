@@ -6,18 +6,28 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 
+enum BlackJackPlayerState {
+    PREPARING,
+    IN_GAME,
+    BETTING
+}
+
 class BlackJackPlayer {
     public final Player Player;
+    public final Integer PlayerNumber;
+    public BlackJackPlayerState state;
     private final List<Card> cards;
     private Integer cardsValue;
     private Integer stake;
 
-    public BlackJackPlayer(Player player) {
+    public BlackJackPlayer(Player player, Integer playerNumber) {
         this.Player = player;
+        this.PlayerNumber = playerNumber;
 
         this.cards = new ArrayList<>();
         this.cardsValue = 0;
         this.stake = 0;
+        this.state = BlackJackPlayerState.PREPARING;
     }
 
 
