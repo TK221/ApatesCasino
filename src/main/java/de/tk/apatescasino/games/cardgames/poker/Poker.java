@@ -95,6 +95,7 @@ public class Poker implements Game {
     private final List<UUID> messageWaitingPlayers;
     // All players with their properties which are in the game
     private final Map<Integer, PokerPlayerProperties> playerList;
+    // Balance of all players at the beginning od a round
     private final Map<Integer, Integer> oldPlayerBalance;
 
     // Items which are used to raise the stake by a specific amount
@@ -154,7 +155,7 @@ public class Poker implements Game {
         initHologram();
     }
 
-    // Actions after a specific time for players
+    // Timer for players to respond to the bet amount message
     private void writeMessageTimer(UUID playerID) {
 
         BukkitScheduler scheduler = getServer().getScheduler();
@@ -173,12 +174,13 @@ public class Poker implements Game {
         }, 30 * 20L);
     }
 
-    // Actions after a specific time for the general game
+    // Timer to start the countdown
     private void preparingTimer() {
         if (gameState != GameState.STARTING) return;
         BukkitScheduler scheduler = getServer().getScheduler();
         scheduler.scheduleSyncDelayedTask(ApatesCasino.getInstance(), () -> {
 
+            // Check for enough players and start the countdown else stop the game
             if (playerList.size() < minPlayers) {
                 gameState = GameState.WAITFORPLAYERS;
 
@@ -191,6 +193,7 @@ public class Poker implements Game {
         }, preparingTime * 20L);
     }
 
+    // Countdown timer
     private void gameCountDown() {
         if (gameState != GameState.STARTING) return;
         countDownNumber = 15;
