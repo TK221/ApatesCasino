@@ -25,7 +25,7 @@ public class BlackJack implements Game {
     private final int maxPlayers;
     private final Location joinBlockPosition;
 
-    private final ItemStack HIT_ITEM = ItemStackBuilder.createItemStack(Material.PINK_DYE, 1, (ChatColor.DARK_GREEN + "HIT"), new String[]{"Hole eine weitere Karte"});
+    private final ItemStack HIT_ITEM = ItemStackBuilder.createItemStack(Material.PINK_DYE, 1, (ChatColor.DARK_GREEN + "HIT"), new String[]{"Hole dir eine weitere Karte"});
     private final ItemStack STAND_ITEM = ItemStackBuilder.createItemStack(Material.LIME_DYE, 1, (ChatColor.DARK_BLUE + "STAND"), new String[]{"Beende deinen Zug"});
     private final ItemStack LEAVE_ITEM = ItemStackBuilder.createItemStack(Material.BARRIER, 1, (ChatColor.RED + "Leave"), new String[]{"Verlasse das Spiel"});
 
@@ -76,39 +76,62 @@ public class BlackJack implements Game {
     }
 
     private void nextPlayer() {
+        // Get current player and set waiting properties
         BlackJackPlayer player = getPlayerByNumber(currentPlayer);
-        if (player != null) player.state = BlackJackPlayerState.IN_GAME;
+        if (player != null) {
+            player.state = BlackJackPlayerState.IN_GAME;
+            setWaitingBar(player);
+        }
 
+        //  Get next player and set the player turn or let the croupier do his turn
         BlackJackPlayer nextPlayer = getNextPlayer();
         if (nextPlayer != null) {
-            nextPlayer.state = BlackJackPlayerState.BETTING;
-            playerTurn();
+            playerTurn(nextPlayer);
         } else {
-            dealerTurn();
+            croupierTurn();
         }
     }
 
-    private void playerTurn() {
+    private void playerTurn(BlackJackPlayer player) {
+        currentPlayer = player.PlayerNumber;
+        player.state = BlackJackPlayerState.BETTING;
+        setBettingBar(player);
+    }
+
+    private void croupierTurn() {
 
     }
 
-    private void dealerTurn() {
+    public void PlayerAction(UUID playerID, int slot) {
+        if (!playerMap.containsKey(playerID)) return;
+        BlackJackPlayer player = playerMap.get(playerID);
+
+        if (player.state.equals(BlackJackPlayerState.IN_GAME)) {
+            switch (slot) {
+                case 8:
+                    RemovePlayer(playerID);
+                    break;
+            }
+        } else if (player.state.equals(BlackJackPlayerState.BETTING)) {
+            switch (slot) {
+                case 4:
+                    playerHit(player);
+                    break;
+                case 5:
+                    playerStand(player);
+            }
+        }
+    }
+
+    private void playerHit(BlackJackPlayer player) {
 
     }
 
-    public void PlayerAction(UUID playerID) {
+    private void playerStand(BlackJackPlayer player) {
 
     }
 
-    private void playerHit() {
-
-    }
-
-    private void playerStand() {
-
-    }
-
-    private void playerBust() {
+    private void playerBust(BlackJackPlayer player) {
 
     }
 
