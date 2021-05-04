@@ -29,17 +29,6 @@ public class PokerListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerLeave(PlayerQuitEvent event) {
-        UUID playerID = event.getPlayer().getUniqueId();
-
-        Game game = lobbyManager.getGameByPlayer(playerID);
-
-        if (game instanceof Poker) {
-            game.RemovePlayer(playerID);
-        }
-    }
-
-    @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         UUID playerID = event.getPlayer().getUniqueId();
@@ -115,17 +104,6 @@ public class PokerListener implements Listener {
 
         if (game instanceof Poker) {
             event.setCancelled(true);
-        }
-    }
-
-    @EventHandler
-    public void onPlayerDie(PlayerDeathEvent event) {
-        UUID playerID = event.getEntity().getUniqueId();
-
-        Game game = lobbyManager.getGameByPlayer(playerID);
-
-        if (game instanceof Poker) {
-            game.RemovePlayer(playerID);
         }
     }
 }
