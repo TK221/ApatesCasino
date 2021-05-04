@@ -13,25 +13,28 @@ import java.util.Objects;
 
 public final class ApatesCasino extends JavaPlugin {
 
+
     private static ApatesCasino instance;
 
     private final LobbyManager lobbyManager = new LobbyManager();
+    private BankAccountHandler bankAccountHandler;
     private static Economy econ = null;
 
     @Override
     public void onEnable() {
         // Plugin startup login
         if (!setupEconomy()) {
-            System.out.println("");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
         instance = this;
+        bankAccountHandler = new BankAccountHandler(econ);
+
         getServer().getPluginManager().registerEvents(new PokerListener(lobbyManager), this);
         getServer().getPluginManager().registerEvents(new GameListener(lobbyManager), this);
 
-        Objects.requireNonNull(this.getCommand("casino")).setExecutor(new CasinoCommand(lobbyManager));
+        Objects.requireNonNull(this.getCommand("casino")).setExecutor(new CasinoCommand(lobbyManager, bankAccountHandler));
     }
 
     @Override

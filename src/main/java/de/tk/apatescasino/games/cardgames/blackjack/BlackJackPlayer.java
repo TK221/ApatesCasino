@@ -33,7 +33,7 @@ class BlackJackPlayer {
 
     public void AddCard(Card card) {
         cards.add(card);
-        calculateCardsValue();
+        cardsValue = getCalculatedCardsValue(cards);
     }
 
     public List<Card> GetCards() {
@@ -42,12 +42,8 @@ class BlackJackPlayer {
 
     public void ResetCards() {
         cards.clear();
-    }
-
-    private void calculateCardsValue() {
         cardsValue = 0;
     }
-
 
     public void addMoneyToStake(Integer amount) {
         stake += amount;
@@ -59,5 +55,13 @@ class BlackJackPlayer {
 
     public void ResetStake() {
         stake = 0;
+    }
+
+    public Integer getCardsValue() {
+        return cardsValue;
+    }
+
+    public static Integer getCalculatedCardsValue(List<Card> cards) {
+        return 0;
     }
 }

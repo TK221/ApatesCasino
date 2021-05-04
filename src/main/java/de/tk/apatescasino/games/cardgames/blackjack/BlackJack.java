@@ -1,6 +1,7 @@
 package de.tk.apatescasino.games.cardgames.blackjack;
 
 import de.tk.apatescasino.ApatesCasino;
+import de.tk.apatescasino.BankAccountHandler;
 import de.tk.apatescasino.games.Game;
 import de.tk.apatescasino.games.ItemStackBuilder;
 import de.tk.apatescasino.games.Lobby;
@@ -30,6 +31,7 @@ public class BlackJack implements Game {
     private final ItemStack LEAVE_ITEM = ItemStackBuilder.createItemStack(Material.BARRIER, 1, (ChatColor.RED + "Leave"), new String[]{"Verlasse das Spiel"});
 
     private final Economy economy;
+    private final BankAccountHandler bank;
 
     private Integer currentPlayer;
     private BukkitRunnable turnTimer;
@@ -40,12 +42,14 @@ public class BlackJack implements Game {
 
     private final CardDeck cardDeck;
     private final List<Card> croupierCards;
+    private Integer croupierCardsValue;
 
-    public BlackJack(String id, int minPlayers, int maxPlayers, Location joinBlockPosition) {
+    public BlackJack(String id, int minPlayers, int maxPlayers, Location joinBlockPosition, BankAccountHandler bank) {
         this.minPlayers = minPlayers;
         this.maxPlayers = maxPlayers;
         this.joinBlockPosition = joinBlockPosition;
         this.lobby = new Lobby(maxPlayers, minPlayers, id);
+        this.bank = bank;
 
         playerMap = new HashMap<>();
         cardDeck = new CardDeck();
@@ -64,9 +68,11 @@ public class BlackJack implements Game {
 
     private void startNewGame() {
 
+        // Initialize Deck
         cardDeck.InitStandardDeck();
         cardDeck.ShuffleDeck();
 
+        // Draw Cards
         for (BlackJackPlayer player : playerMap.values()) player.AddCard(cardDeck.pickFirst());
         croupierCards.add(cardDeck.pickFirst());
         for (BlackJackPlayer player : playerMap.values()) player.AddCard(cardDeck.pickFirst());
@@ -86,20 +92,48 @@ public class BlackJack implements Game {
         //  Get next player and set the player turn or let the croupier do his turn
         BlackJackPlayer nextPlayer = getNextPlayer();
         if (nextPlayer != null) {
+            currentPlayer = nextPlayer.PlayerNumber;
             playerTurn(nextPlayer);
         } else {
+            currentPlayer = 0;
             croupierTurn();
         }
     }
 
     private void playerTurn(BlackJackPlayer player) {
+
         currentPlayer = player.PlayerNumber;
         player.state = BlackJackPlayerState.BETTING;
         setBettingBar(player);
+
+        startTurnTimer();
     }
 
     private void croupierTurn() {
+        croupierCards.add(cardDeck.pickFirst());
+        croupierCardsValue = BlackJackPlayer.getCalculatedCardsValue(croupierCards);
 
+        if (croupierCardsValue < 17) {
+            startTurnTimer();
+        } else {
+            endGame();
+        }
+    }
+
+    private void endGame() {
+
+        for (BlackJackPlayer player : playerMap.values()) {
+            if (player.getCardsValue() < croupierCardsValue) {
+                playerBust(player);
+            } else if (player.getCardsValue() > croupierCardsValue) {
+                economy.depositPlayer(player.Player, player.getStake() * 2);
+                player.ResetStake();
+            } else {
+
+            }
+
+            player.ResetStake();
+        }
     }
 
     public void PlayerAction(UUID playerID, int slot) {
@@ -124,15 +158,28 @@ public class BlackJack implements Game {
     }
 
     private void playerHit(BlackJackPlayer player) {
+        player.AddCard(cardDeck.pickFirst());
 
+        if (player.getCardsValue() > 21) {
+            playerBust(player);
+        }
     }
 
     private void playerStand(BlackJackPlayer player) {
-
+        nextPlayer();
     }
 
     private void playerBust(BlackJackPlayer player) {
 
+        // Deposit stake of the player to casino account and set state to prepared
+        bank.transferToCasino(player.Player, player.getStake());
+        player.ResetStake();
+        player.state = BlackJackPlayerState.PREPARING;
+    }
+
+    private void playerWon(BlackJackPlayer player, int amount) {
+        bank.transferToPlayer(player.Player, amount);
+        player.ResetStake();
     }
 
     private void setWaitingBar(BlackJackPlayer player) {
@@ -159,7 +206,7 @@ public class BlackJack implements Game {
     private BlackJackPlayer getNextPlayer() {
         List<BlackJackPlayer> players = getActivePlayers();
 
-        for (int i = currentPlayer; i <= maxPlayers; i++) {
+        for (int i = (currentPlayer + 1); i <= maxPlayers; i++) {
             int number = i;
 
             BlackJackPlayer player = players.stream().filter(p -> p.PlayerNumber.equals(number)).findFirst().orElse(null);

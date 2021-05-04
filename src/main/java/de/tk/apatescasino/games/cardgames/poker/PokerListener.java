@@ -2,8 +2,6 @@ package de.tk.apatescasino.games.cardgames.poker;
 
 import de.tk.apatescasino.games.Game;
 import de.tk.apatescasino.games.LobbyManager;
-import org.bukkit.ChatColor;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -28,9 +26,7 @@ public class PokerListener implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        Player player = event.getPlayer();
         UUID playerID = event.getPlayer().getUniqueId();
-        Block block = event.getClickedBlock();
         event.getPlayer().getInventory().getHeldItemSlot();
 
         Game game = lobbyManager.getGameByPlayer(playerID);
@@ -38,16 +34,8 @@ public class PokerListener implements Listener {
         if (event.getHand() == EquipmentSlot.HAND) {
             if (game instanceof Poker) {
                 ((Poker) game).PlayerAction(playerID, event.getPlayer().getInventory().getHeldItemSlot());
-            } else if (block != null) {
-                Game newGame = lobbyManager.getGameByJoinBlock(block.getLocation());
-
-                if (newGame != null) {
-                    if (!newGame.containsPlayer(player.getUniqueId())) newGame.AddPlayer(player);
-                    else player.sendMessage(ChatColor.YELLOW + "You are already in the game");
-                }
             }
         }
-
     }
 
     @EventHandler

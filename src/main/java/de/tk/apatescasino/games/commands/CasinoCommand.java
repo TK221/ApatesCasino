@@ -1,5 +1,6 @@
 package de.tk.apatescasino.games.commands;
 
+import de.tk.apatescasino.BankAccountHandler;
 import de.tk.apatescasino.games.LobbyManager;
 import de.tk.apatescasino.games.cardgames.poker.Poker;
 import org.bukkit.ChatColor;
@@ -12,9 +13,11 @@ import org.bukkit.entity.Player;
 public class CasinoCommand implements CommandExecutor {
 
     private final LobbyManager lobbyManager;
+    private BankAccountHandler bankAccountHandler;
 
-    public CasinoCommand(LobbyManager lobbyManager) {
+    public CasinoCommand(LobbyManager lobbyManager, BankAccountHandler bankAccountHandler) {
         this.lobbyManager = lobbyManager;
+        this.bankAccountHandler = bankAccountHandler;
     }
 
     @Override
