@@ -9,12 +9,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
 import java.util.UUID;
@@ -26,17 +24,6 @@ public class PokerListener implements Listener {
 
     public PokerListener(LobbyManager lobbyManager) {
         this.lobbyManager = lobbyManager;
-    }
-
-    @EventHandler
-    public void onPlayerLeave(PlayerQuitEvent event) {
-        UUID playerID = event.getPlayer().getUniqueId();
-
-        Game game = lobbyManager.getGameByPlayer(playerID);
-
-        if (game instanceof Poker) {
-            game.RemovePlayer(playerID);
-        }
     }
 
     @EventHandler
@@ -115,17 +102,6 @@ public class PokerListener implements Listener {
 
         if (game instanceof Poker) {
             event.setCancelled(true);
-        }
-    }
-
-    @EventHandler
-    public void onPlayerDie(PlayerDeathEvent event) {
-        UUID playerID = event.getEntity().getUniqueId();
-
-        Game game = lobbyManager.getGameByPlayer(playerID);
-
-        if (game instanceof Poker) {
-            game.RemovePlayer(playerID);
         }
     }
 }

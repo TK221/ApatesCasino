@@ -1,5 +1,6 @@
 package de.tk.apatescasino;
 
+import de.tk.apatescasino.games.GameListener;
 import de.tk.apatescasino.games.LobbyManager;
 import de.tk.apatescasino.games.cardgames.poker.PokerListener;
 import de.tk.apatescasino.games.commands.CasinoCommand;
@@ -28,6 +29,7 @@ public final class ApatesCasino extends JavaPlugin {
 
         instance = this;
         getServer().getPluginManager().registerEvents(new PokerListener(lobbyManager), this);
+        getServer().getPluginManager().registerEvents(new GameListener(lobbyManager), this);
 
         Objects.requireNonNull(this.getCommand("casino")).setExecutor(new CasinoCommand(lobbyManager));
     }
