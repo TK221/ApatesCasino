@@ -636,7 +636,7 @@ public class Poker implements Game {
 
             setPlayerMoneyToActionBar(playerProperties);
         } else {
-            if (slot == 8) {
+            if (slot == 0) {
                 RemovePlayer(playerID);
             }
             return;

@@ -1,6 +1,7 @@
 package de.tk.apatescasino.games.cardgames.blackjack;
 
 import de.tk.apatescasino.games.cardgames.card.Card;
+import de.tk.apatescasino.games.cardgames.card.CardRank;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -17,8 +18,8 @@ class BlackJackPlayer {
     public final Integer PlayerNumber;
     public BlackJackPlayerState state;
     private final List<Card> cards;
-    private Integer cardsValue;
-    private Integer stake;
+    private int cardsValue;
+    private int stake;
 
     public BlackJackPlayer(Player player, Integer playerNumber) {
         this.Player = player;
@@ -45,11 +46,11 @@ class BlackJackPlayer {
         cardsValue = 0;
     }
 
-    public void addMoneyToStake(Integer amount) {
+    public void AddMoneyToStake(Integer amount) {
         stake += amount;
     }
 
-    public Integer getStake() {
+    public Integer GetStake() {
         return stake;
     }
 
@@ -57,11 +58,27 @@ class BlackJackPlayer {
         stake = 0;
     }
 
-    public Integer getCardsValue() {
+    public Integer GetCardsValue() {
         return cardsValue;
     }
 
-    public static Integer getCalculatedCardsValue(List<Card> cards) {
-        return 0;
+    public static int getCalculatedCardsValue(List<Card> cards) {
+        int value = 0;
+        for (Card card : cards) value += getValue(card.Rank);
+
+        if (value > 21 && cards.stream().anyMatch(c -> c.Rank.equals(CardRank.ACE))) {
+            for (Card card : cards) {
+                if (value > 21 && card.Rank.equals(CardRank.ACE)) value -= 10;
+            }
+        }
+
+        return value;
+    }
+
+    private static int getValue(CardRank rank) {
+        if (rank == CardRank.ACE) return 11;
+        else if (rank.ordinal() < CardRank.TEN.ordinal()) {
+            return rank.ordinal() + 2;
+        } else return 10;
     }
 }

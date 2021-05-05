@@ -46,14 +46,11 @@ public class GameListener implements Listener {
         UUID playerID = player.getUniqueId();
         Block block = event.getClickedBlock();
 
-        if (event.getHand() == EquipmentSlot.HAND) {
-            // If the player interacts with a join block and add him to the game or inform him if he is already in one
-            if (block != null) {
-                if (lobbyManager.getGameByPlayer(playerID) == null) {
-                    Game joinBlockGame = lobbyManager.getGameByJoinBlock(block.getLocation());
-                    joinBlockGame.AddPlayer(player);
-                } else player.sendMessage(ChatColor.YELLOW + "Du bist bereits in einem Spiel");
-            }
+        if (event.getHand() == EquipmentSlot.HAND && block != null && lobbyManager.getGameByJoinBlock(block.getLocation()) != null) {
+            if (lobbyManager.getGameByPlayer(playerID) == null) {
+                Game joinBlockGame = lobbyManager.getGameByJoinBlock(block.getLocation());
+                joinBlockGame.AddPlayer(player);
+            } else player.sendMessage(ChatColor.YELLOW + "Du bist bereits in einem Spiel");
         }
     }
 }

@@ -33,6 +33,14 @@ public class BankAccountHandler {
         econ.bankDeposit(CASINO_BANK_ACCOUNT, amount);
     }
 
+    public void deposit(int amount) {
+        econ.bankDeposit(CASINO_BANK_ACCOUNT, amount);
+    }
+
+    public void withdraw(int amount) {
+        econ.bankWithdraw(CASINO_BANK_ACCOUNT, amount);
+    }
+
     public int getBalance() {
         return (int) econ.bankBalance(CASINO_BANK_ACCOUNT).balance;
     }

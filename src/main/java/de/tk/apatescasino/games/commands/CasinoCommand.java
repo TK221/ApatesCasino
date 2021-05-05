@@ -2,6 +2,7 @@ package de.tk.apatescasino.games.commands;
 
 import de.tk.apatescasino.BankAccountHandler;
 import de.tk.apatescasino.games.LobbyManager;
+import de.tk.apatescasino.games.cardgames.blackjack.BlackJack;
 import de.tk.apatescasino.games.cardgames.poker.Poker;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
@@ -53,6 +54,9 @@ public class CasinoCommand implements CommandExecutor {
                 switch (args[1].toLowerCase()) {
                     case "poker":
                         lobbyManager.ActiveGames.put(name, new Poker(name, facingBlock.getLocation(), 10, 50, 100, 1, 4, 20, 5));
+                        break;
+                    case "blackjack":
+                        lobbyManager.ActiveGames.put(name, new BlackJack(name, 1, 10, facingBlock.getLocation(), bankAccountHandler));
                         break;
 
                     default:

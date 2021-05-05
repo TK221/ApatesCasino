@@ -5,6 +5,7 @@ import de.tk.apatescasino.games.LobbyManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
@@ -15,6 +16,20 @@ public class BlackJackListener implements Listener {
 
     public BlackJackListener(LobbyManager lobbyManager) {
         this.lobbyManager = lobbyManager;
+    }
+
+
+    @EventHandler
+    public void onPlayerMessage(AsyncPlayerChatEvent event) {
+        UUID playerID = event.getPlayer().getUniqueId();
+        String message = event.getMessage();
+
+        Game game = lobbyManager.getGameByPlayer(playerID);
+
+        if (game instanceof BlackJack) {
+            ((BlackJack) game).OnPlayerSendMessage(playerID, message);
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler
