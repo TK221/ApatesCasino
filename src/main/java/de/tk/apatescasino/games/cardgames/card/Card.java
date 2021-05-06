@@ -5,6 +5,8 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.List;
+
 
 public class Card {
 
@@ -41,6 +43,18 @@ public class Card {
 
     public static String GetTextCard(Card card) {
         return GetTypeSymbol(card.Type) + " " + GetCardColor(card.Type) + GetGermanRank(card.Rank) + " " + GetTypeSymbol(card.Type) + ChatColor.WHITE;
+    }
+
+    public static String GetCardsAsText(List<Card> cards) {
+        if (cards.size() == 0) return "";
+        StringBuilder cardMessage = new StringBuilder(ChatColor.WHITE.toString());
+
+        for (Card card : cards) {
+            cardMessage.append(" | ").append(Card.GetTextCard(card));
+        }
+        cardMessage.append(" |");
+
+        return cardMessage.toString();
     }
 
     public static String GetCardColor(CardType type) {

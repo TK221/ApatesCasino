@@ -42,7 +42,6 @@ public final class ApatesCasino extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        lobbyManager.ActiveGames.forEach((key, value) -> value.CancelGame());
     }
 
     private boolean setupEconomy() {
