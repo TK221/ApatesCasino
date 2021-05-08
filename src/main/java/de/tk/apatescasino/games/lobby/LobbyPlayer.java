@@ -1,5 +1,6 @@
-package de.tk.apatescasino.games;
+package de.tk.apatescasino.games.lobby;
 
+import de.tk.apatescasino.games.PlayerState;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;

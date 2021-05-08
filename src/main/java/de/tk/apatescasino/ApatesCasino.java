@@ -1,10 +1,11 @@
 package de.tk.apatescasino;
 
+import de.tk.apatescasino.games.Game;
 import de.tk.apatescasino.games.GameListener;
-import de.tk.apatescasino.games.LobbyManager;
 import de.tk.apatescasino.games.cardgames.blackjack.BlackJackListener;
 import de.tk.apatescasino.games.cardgames.poker.PokerListener;
 import de.tk.apatescasino.games.commands.CasinoCommand;
+import de.tk.apatescasino.games.lobby.LobbyManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -18,7 +19,7 @@ public final class ApatesCasino extends JavaPlugin {
     private static ApatesCasino instance;
 
     private final LobbyManager lobbyManager = new LobbyManager();
-    private BankAccountHandler bankAccountHandler;
+    private static BankAccountHandler bankAccountHandler;
     private static Economy econ = null;
 
     @Override
@@ -36,12 +37,12 @@ public final class ApatesCasino extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PokerListener(lobbyManager), this);
         getServer().getPluginManager().registerEvents(new BlackJackListener(lobbyManager), this);
 
-        Objects.requireNonNull(this.getCommand("casino")).setExecutor(new CasinoCommand(lobbyManager, bankAccountHandler));
+        Objects.requireNonNull(this.getCommand("casino")).setExecutor(new CasinoCommand(lobbyManager));
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        for (Game game : lobbyManager.GetAllGames()) game.CancelGame();
     }
 
     private boolean setupEconomy() {
@@ -62,5 +63,9 @@ public final class ApatesCasino extends JavaPlugin {
 
     public static Economy getEconomy() {
         return econ;
+    }
+
+    public static BankAccountHandler getBankAccountHandler() {
+        return bankAccountHandler;
     }
 }

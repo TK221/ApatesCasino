@@ -7,10 +7,10 @@ import de.tk.apatescasino.ApatesCasino;
 import de.tk.apatescasino.BankAccountHandler;
 import de.tk.apatescasino.games.Game;
 import de.tk.apatescasino.games.ItemStackBuilder;
-import de.tk.apatescasino.games.Lobby;
 import de.tk.apatescasino.games.PlayerState;
 import de.tk.apatescasino.games.cardgames.card.Card;
 import de.tk.apatescasino.games.cardgames.card.CardDeck;
+import de.tk.apatescasino.games.lobby.Lobby;
 import de.tk.apatescasino.games.utilities.PlayerInventorySaver;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -72,12 +72,12 @@ public class BlackJack implements Game {
     TextLine playerLine;
     TextLine playerCardsLine;
 
-    public BlackJack(String id, int minPlayers, int maxPlayers, Location joinBlockPosition, BankAccountHandler bank) {
+    public BlackJack(String id, int minPlayers, int maxPlayers, Location joinBlockPosition) {
         this.minPlayers = minPlayers;
         this.maxPlayers = maxPlayers;
         this.joinBlockPosition = joinBlockPosition;
         this.lobby = new Lobby(maxPlayers, minPlayers, id);
-        this.bank = bank;
+        this.bank = ApatesCasino.getBankAccountHandler();
 
         playerMap = new HashMap<>();
         cardDeck = new CardDeck();

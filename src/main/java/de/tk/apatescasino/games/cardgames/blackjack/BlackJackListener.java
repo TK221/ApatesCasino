@@ -1,7 +1,7 @@
 package de.tk.apatescasino.games.cardgames.blackjack;
 
 import de.tk.apatescasino.games.Game;
-import de.tk.apatescasino.games.LobbyManager;
+import de.tk.apatescasino.games.lobby.LobbyManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -25,7 +25,7 @@ public class BlackJackListener implements Listener {
         UUID playerID = event.getPlayer().getUniqueId();
         String message = event.getMessage();
 
-        Game game = lobbyManager.getGameByPlayer(playerID);
+        Game game = lobbyManager.GetGameByPlayer(playerID);
 
         if (game instanceof BlackJack) {
             ((BlackJack) game).OnPlayerSendMessage(playerID, message);
@@ -40,7 +40,7 @@ public class BlackJackListener implements Listener {
         int slot = player.getInventory().getHeldItemSlot();
 
         if (event.getHand() == EquipmentSlot.HAND) {
-            Game playerGame = lobbyManager.getGameByPlayer(playerID);
+            Game playerGame = lobbyManager.GetGameByPlayer(playerID);
 
             if (playerGame instanceof BlackJack) {
                 ((BlackJack) playerGame).PlayerAction(playerID, slot);
@@ -52,7 +52,7 @@ public class BlackJackListener implements Listener {
     public void onPlayerPlaceBlock(BlockPlaceEvent event) {
         UUID playerID = event.getPlayer().getUniqueId();
 
-        Game game = lobbyManager.getGameByPlayer(playerID);
+        Game game = lobbyManager.GetGameByPlayer(playerID);
 
         if (game instanceof BlackJack) {
             event.setCancelled(true);

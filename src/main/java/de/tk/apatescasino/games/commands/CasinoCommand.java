@@ -1,9 +1,8 @@
 package de.tk.apatescasino.games.commands;
 
-import de.tk.apatescasino.BankAccountHandler;
-import de.tk.apatescasino.games.LobbyManager;
 import de.tk.apatescasino.games.cardgames.blackjack.BlackJack;
 import de.tk.apatescasino.games.cardgames.poker.Poker;
+import de.tk.apatescasino.games.lobby.LobbyManager;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
@@ -14,11 +13,9 @@ import org.bukkit.entity.Player;
 public class CasinoCommand implements CommandExecutor {
 
     private final LobbyManager lobbyManager;
-    private BankAccountHandler bankAccountHandler;
 
-    public CasinoCommand(LobbyManager lobbyManager, BankAccountHandler bankAccountHandler) {
+    public CasinoCommand(LobbyManager lobbyManager) {
         this.lobbyManager = lobbyManager;
-        this.bankAccountHandler = bankAccountHandler;
     }
 
     @Override
@@ -31,10 +28,8 @@ public class CasinoCommand implements CommandExecutor {
             if (args[0].equalsIgnoreCase("remove")) {
                 String name = args[1];
 
-                if (lobbyManager.ActiveGames.containsKey(name)) {
-                    lobbyManager.ActiveGames.get(name).CancelGame();
-                    lobbyManager.ActiveGames.remove(name);
-
+                if (lobbyManager.GameExist(name)) {
+                    lobbyManager.RemoveGame(name);
                     player.sendMessage(ChatColor.GREEN + name + " successfully removed");
                 } else {
                     player.sendMessage(ChatColor.RED + "This game doesn't exist");
@@ -46,24 +41,24 @@ public class CasinoCommand implements CommandExecutor {
             if (args[0].equalsIgnoreCase("create")) {
                 String name = args[2];
 
-                if (lobbyManager.ActiveGames.containsKey(name)) {
+                if (lobbyManager.GameExist(name)) {
                     player.sendMessage(ChatColor.RED + "The game with this name already exists");
                     return false;
                 }
 
                 switch (args[1].toLowerCase()) {
                     case "poker":
-                        lobbyManager.ActiveGames.put(name, new Poker(name, facingBlock.getLocation(), 10, 50, 100, 1, 4, 20, 5));
+                        lobbyManager.AddGame(new Poker(name, facingBlock.getLocation(), 10, 50, 100, 1, 4, 20, 5), name);
                         break;
                     case "blackjack":
-                        lobbyManager.ActiveGames.put(name, new BlackJack(name, 1, 10, facingBlock.getLocation(), bankAccountHandler));
+                        lobbyManager.AddGame(new BlackJack(name, 1, 10, facingBlock.getLocation()), name);
                         break;
 
                     default:
                         return false;
                 }
 
-                if (lobbyManager.ActiveGames.get(name) != null)
+                if (lobbyManager.GetGame(name) != null)
                     player.sendMessage(ChatColor.GREEN + name + " successfully created!");
             }
         }

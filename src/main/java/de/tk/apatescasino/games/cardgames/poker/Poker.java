@@ -6,7 +6,7 @@ import com.gmail.filoghost.holographicdisplays.api.line.TextLine;
 import de.tk.apatescasino.ApatesCasino;
 import de.tk.apatescasino.games.Game;
 import de.tk.apatescasino.games.ItemStackBuilder;
-import de.tk.apatescasino.games.Lobby;
+import de.tk.apatescasino.games.lobby.Lobby;
 import de.tk.apatescasino.games.PlayerState;
 import de.tk.apatescasino.games.cardgames.card.Card;
 import de.tk.apatescasino.games.utilities.PlayerBet;

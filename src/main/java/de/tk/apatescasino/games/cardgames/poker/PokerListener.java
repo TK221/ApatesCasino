@@ -1,7 +1,7 @@
 package de.tk.apatescasino.games.cardgames.poker;
 
 import de.tk.apatescasino.games.Game;
-import de.tk.apatescasino.games.LobbyManager;
+import de.tk.apatescasino.games.lobby.LobbyManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -29,7 +29,7 @@ public class PokerListener implements Listener {
         UUID playerID = event.getPlayer().getUniqueId();
         event.getPlayer().getInventory().getHeldItemSlot();
 
-        Game game = lobbyManager.getGameByPlayer(playerID);
+        Game game = lobbyManager.GetGameByPlayer(playerID);
 
         if (event.getHand() == EquipmentSlot.HAND) {
             if (game instanceof Poker) {
@@ -44,7 +44,7 @@ public class PokerListener implements Listener {
         UUID playerID = player.getUniqueId();
         String message = event.getMessage();
 
-        Game game = lobbyManager.getGameByPlayer(playerID);
+        Game game = lobbyManager.GetGameByPlayer(playerID);
 
         if (game instanceof Poker) {
             ((Poker) game).OnPlayerSendMessage(playerID, message);
@@ -56,7 +56,7 @@ public class PokerListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         UUID playerID = event.getWhoClicked().getUniqueId();
 
-        Game game = lobbyManager.getGameByPlayer(playerID);
+        Game game = lobbyManager.GetGameByPlayer(playerID);
         if (game instanceof Poker) event.setCancelled(true);
     }
 
@@ -66,7 +66,7 @@ public class PokerListener implements Listener {
             Player player = (Player) event.getEntity();
             UUID playerID = player.getUniqueId();
 
-            Game game = lobbyManager.getGameByPlayer(playerID);
+            Game game = lobbyManager.GetGameByPlayer(playerID);
             if (game instanceof Poker) event.setCancelled(true);
         }
     }
@@ -75,7 +75,7 @@ public class PokerListener implements Listener {
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         UUID playerID = event.getPlayer().getUniqueId();
 
-        Game game = lobbyManager.getGameByPlayer(playerID);
+        Game game = lobbyManager.GetGameByPlayer(playerID);
 
         if (game instanceof Poker) {
             event.setCancelled(true);
@@ -86,7 +86,7 @@ public class PokerListener implements Listener {
     public void onPlayerPlaceBlock(BlockPlaceEvent event) {
         UUID playerID = event.getPlayer().getUniqueId();
 
-        Game game = lobbyManager.getGameByPlayer(playerID);
+        Game game = lobbyManager.GetGameByPlayer(playerID);
 
         if (game instanceof Poker) {
             event.setCancelled(true);

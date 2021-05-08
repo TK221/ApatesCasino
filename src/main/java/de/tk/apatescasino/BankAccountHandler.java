@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public class BankAccountHandler {
 
-    private static final String CASINO_BANK_ACCOUNT = "Casino Apate";
+    private static final String CASINO_BANK_ACCOUNT = "CasinoApate";
 
     private final Economy econ;
 
