@@ -6,6 +6,7 @@ import com.gmail.filoghost.holographicdisplays.api.line.TextLine;
 import de.tk.apatescasino.ApatesCasino;
 import de.tk.apatescasino.BankAccountHandler;
 import de.tk.apatescasino.games.Game;
+import de.tk.apatescasino.games.GameType;
 import de.tk.apatescasino.games.ItemStackBuilder;
 import de.tk.apatescasino.games.PlayerState;
 import de.tk.apatescasino.games.cardgames.card.Card;
@@ -423,6 +424,11 @@ public class BlackJack implements Game {
 
         hologram.delete();
         playerMap.clear();
+    }
+
+    @Override
+    public GameType getGameType() {
+        return GameType.BLACKJACK;
     }
 
     @Override

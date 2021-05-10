@@ -5,6 +5,7 @@ import de.tk.apatescasino.games.GameListener;
 import de.tk.apatescasino.games.cardgames.blackjack.BlackJackListener;
 import de.tk.apatescasino.games.cardgames.poker.PokerListener;
 import de.tk.apatescasino.games.commands.CasinoCommand;
+import de.tk.apatescasino.games.config.GameConfigManager;
 import de.tk.apatescasino.games.lobby.LobbyManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -19,6 +20,7 @@ public final class ApatesCasino extends JavaPlugin {
     private static ApatesCasino instance;
 
     private final LobbyManager lobbyManager = new LobbyManager();
+    private final GameConfigManager gameConfigManager = new GameConfigManager(lobbyManager);
     private static BankAccountHandler bankAccountHandler;
     private static Economy econ = null;
 
@@ -33,11 +35,11 @@ public final class ApatesCasino extends JavaPlugin {
         instance = this;
         bankAccountHandler = new BankAccountHandler(econ);
 
-        getServer().getPluginManager().registerEvents(new GameListener(lobbyManager), this);
+        getServer().getPluginManager().registerEvents(new GameListener(lobbyManager, gameConfigManager), this);
         getServer().getPluginManager().registerEvents(new PokerListener(lobbyManager), this);
         getServer().getPluginManager().registerEvents(new BlackJackListener(lobbyManager), this);
 
-        Objects.requireNonNull(this.getCommand("casino")).setExecutor(new CasinoCommand(lobbyManager));
+        Objects.requireNonNull(this.getCommand("casino")).setExecutor(new CasinoCommand(lobbyManager, gameConfigManager));
     }
 
     @Override

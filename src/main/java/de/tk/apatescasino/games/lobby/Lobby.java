@@ -25,8 +25,7 @@ public class Lobby {
 
     public void AddPlayer(Player player) {
 
-        if (player != null)
-        {
+        if (player != null) {
             players.add(new LobbyPlayer(player.getUniqueId(), PlayerState.NEW, player));
         }
     }
@@ -60,6 +59,7 @@ public class Lobby {
     public int getMaxPlayers() {
         return MaxPlayers;
     }
+
     public int getMinPlayers() {
         return MinPlayers;
     }

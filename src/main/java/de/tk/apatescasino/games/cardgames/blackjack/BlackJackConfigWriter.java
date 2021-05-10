@@ -34,6 +34,8 @@ public class BlackJackConfigWriter implements GameConfigWriter {
 
         config = new BlackJackConfig(gameConfig);
         currInputType = inputTypes.values()[0];
+
+        sendInformationMessage();
     }
 
     @Override
@@ -88,13 +90,14 @@ public class BlackJackConfigWriter implements GameConfigWriter {
 
     private void increaseInputType() {
         if (currInputType != null) {
-            if (currInputType.ordinal() >= inputTypes.values().length - 1)
+            if (currInputType.ordinal() < inputTypes.values().length - 1)
                 currInputType = inputTypes.values()[currInputType.ordinal() + 1];
             else {
                 Game game = new BlackJack(config.GameID, config.MinPlayers, config.MaxPlayers, config.JoinBlockPosition);
-                gameConfigManager.CreateNewGame(config, game);
+                gameConfigManager.CreateNewGame(config, game, playerID);
             }
         }
+        sendInformationMessage();
     }
 
     private void sendInformationMessage() {

@@ -5,10 +5,11 @@ import com.gmail.filoghost.holographicdisplays.api.HologramsAPI;
 import com.gmail.filoghost.holographicdisplays.api.line.TextLine;
 import de.tk.apatescasino.ApatesCasino;
 import de.tk.apatescasino.games.Game;
+import de.tk.apatescasino.games.GameType;
 import de.tk.apatescasino.games.ItemStackBuilder;
-import de.tk.apatescasino.games.lobby.Lobby;
 import de.tk.apatescasino.games.PlayerState;
 import de.tk.apatescasino.games.cardgames.card.Card;
+import de.tk.apatescasino.games.lobby.Lobby;
 import de.tk.apatescasino.games.utilities.PlayerBet;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -705,6 +706,11 @@ public class Poker implements Game {
 
         hologram.delete();
         playerList.clear();
+    }
+
+    @Override
+    public GameType getGameType() {
+        return GameType.BLACKJACK;
     }
 
     @Override

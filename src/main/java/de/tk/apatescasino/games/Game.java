@@ -8,13 +8,20 @@ import java.util.UUID;
 public interface Game {
 
     void StartGame();
+
     void CancelGame();
 
+    GameType getGameType();
+
     Location getJoinBlockPosition();
+
     Integer getMaxPlayers();
+
     Integer getMinPlayers();
 
     void AddPlayer(Player player);
+
     void RemovePlayer(UUID playerID);
+
     boolean containsPlayer(UUID playerID);
 }
