@@ -4,6 +4,7 @@ import de.tk.apatescasino.games.Game;
 import de.tk.apatescasino.games.config.GameConfig;
 import de.tk.apatescasino.games.config.GameConfigManager;
 import de.tk.apatescasino.games.config.GameConfigWriter;
+import de.tk.apatescasino.games.config.LocationCoordinates;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -42,7 +43,7 @@ public class BlackJackConfigWriter implements GameConfigWriter {
     public void AddPositions(Location location) {
         switch (currInputType) {
             case MAINSCREEN:
-                config.MainScreenLocation = location;
+                config.MainScreenLocation = new LocationCoordinates(location);
                 break;
             default:
                 sendInformationMessage();
@@ -76,7 +77,7 @@ public class BlackJackConfigWriter implements GameConfigWriter {
             case TURNTIME:
                 Integer turnTime = GameConfigManager.convertStringToInteger(message);
                 if (turnTime != null && turnTime >= 0) {
-                    config.preparingTime = turnTime;
+                    config.turnTime = turnTime;
                     break;
                 }
 
@@ -93,7 +94,7 @@ public class BlackJackConfigWriter implements GameConfigWriter {
             if (currInputType.ordinal() < inputTypes.values().length - 1)
                 currInputType = inputTypes.values()[currInputType.ordinal() + 1];
             else {
-                Game game = new BlackJack(config.GameID, config.MinPlayers, config.MaxPlayers, config.JoinBlockPosition);
+                Game game = new BlackJack(config.GameID, config.MinPlayers, config.MaxPlayers, config.JoinBlockPosition.GetLocation());
                 gameConfigManager.CreateNewGame(config, game, playerID);
             }
         }

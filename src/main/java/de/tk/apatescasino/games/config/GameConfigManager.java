@@ -20,7 +20,11 @@ public class GameConfigManager {
         this.lobbyManager = lobbyManager;
 
         configWriterMap = new HashMap<>();
-        gameConfigProvider = new GameConfigProvider();
+        gameConfigProvider = new GameConfigProvider(lobbyManager);
+    }
+
+    public void CreateAllGames() {
+        gameConfigProvider.CreateGames();
     }
 
     public void CreateNewGame(GameConfig gameConfig, Game game, UUID playerID) {

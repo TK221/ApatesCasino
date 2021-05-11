@@ -6,11 +6,12 @@ import org.bukkit.plugin.Plugin;
 
 import java.io.*;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
 public class ConfigManager<T> {
-    public static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    public static final Gson gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
 
     // Config stuff
     private File configFile;
@@ -28,7 +29,7 @@ public class ConfigManager<T> {
     public void loadConfig(Type type) throws FileNotFoundException, UnsupportedEncodingException {
         // Only load config if there is some kind of file
         if (configFile.exists()) {
-            configObject = gson.fromJson(new InputStreamReader(new FileInputStream(configFile), "UTF-8"), type);
+            configObject = gson.fromJson(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8), type);
         }
     }
 
@@ -50,7 +51,7 @@ public class ConfigManager<T> {
         }
         configFile.delete();
         try {
-            Files.write(configFile.toPath(), json.getBytes("UTF-8"), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            Files.write(configFile.toPath(), json.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
             return true;
         } catch (IOException e) {
             e.printStackTrace();
