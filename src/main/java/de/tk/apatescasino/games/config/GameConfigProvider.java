@@ -8,8 +8,7 @@ import de.tk.apatescasino.games.cardgames.blackjack.BlackJack;
 import de.tk.apatescasino.games.cardgames.blackjack.BlackJackConfig;
 import de.tk.apatescasino.games.lobby.LobbyManager;
 
-import java.io.FileNotFoundException;
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.util.HashMap;
 
 public class GameConfigProvider {
@@ -32,6 +31,7 @@ public class GameConfigProvider {
 
                 saveBlackJackConfigs(blackJackConfigs);
             } catch (Exception e) {
+                System.out.println("Error while trying to create new game config: " + e.getMessage());
                 return false;
             }
         } else {
@@ -50,8 +50,10 @@ public class GameConfigProvider {
                 try {
                     HashMap<String, BlackJackConfig> blackJackConfigs = loadBlackJackConfigs();
                     blackJackConfigs.remove(gameID);
+
                     saveBlackJackConfigs(blackJackConfigs);
                 } catch (Exception e) {
+                    System.out.println("Error while removing game config: " + e.getMessage());
                     return false;
                 }
                 break;
@@ -69,22 +71,25 @@ public class GameConfigProvider {
     }
 
 
-    private HashMap<String, BlackJackConfig> loadBlackJackConfigs() throws FileNotFoundException, UnsupportedEncodingException {
+    private HashMap<String, BlackJackConfig> loadBlackJackConfigs() throws IOException {
         ConfigManager<HashMap<String, BlackJackConfig>> configManager = new ConfigManager<>(getGameConfigPath(GameType.BLACKJACK), ApatesCasino.getInstance());
         configManager.loadConfig(new TypeToken<HashMap<String, BlackJackConfig>>() {
         }.getType());
 
-        return configManager.getObject() != null ? configManager.getObject() : new HashMap<>();
+        HashMap<String, BlackJackConfig> blackJackConfigs = configManager.getObject();
+
+        return blackJackConfigs != null ? blackJackConfigs : new HashMap<>();
     }
 
     private void saveBlackJackConfigs(HashMap<String, BlackJackConfig> blackJackConfigs) {
-        ConfigManager<HashMap<String, BlackJackConfig>> configManager = new ConfigManager<>("blackjack.json", ApatesCasino.getInstance());
+        ConfigManager<HashMap<String, BlackJackConfig>> configManager = new ConfigManager<>(getGameConfigPath(GameType.BLACKJACK), ApatesCasino.getInstance());
         configManager.setObject(blackJackConfigs);
         configManager.saveConfig();
     }
 
     private void createBlackJackGame(BlackJackConfig config) {
-        lobbyManager.AddGame(new BlackJack(config.GameID, config.MinPlayers, config.MaxPlayers, config.JoinBlockPosition.GetLocation()), config.GameID);
+        lobbyManager.AddGame(new BlackJack(config.GameID, config.MinPlayers, config.MaxPlayers, config.JoinBlockPosition.GetLocation(),
+                config.minBet, config.maxBet, config.preparingTime, config.turnTime), config.GameID);
     }
 
     private static String getGameConfigPath(GameType gameType) {

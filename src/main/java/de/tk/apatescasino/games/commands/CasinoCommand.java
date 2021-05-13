@@ -12,6 +12,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.UUID;
+
 public class CasinoCommand implements CommandExecutor {
 
     private final LobbyManager lobbyManager;
@@ -26,10 +28,22 @@ public class CasinoCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         Player player = (Player) sender;
         if (player == null) return false;
+        UUID playerID = player.getUniqueId();
         Block facingBlock = player.getTargetBlock(null, 10);
 
         if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("remove")) {
+            if (args[0].equalsIgnoreCase("create") && args[1].equalsIgnoreCase("cancel")) {
+
+                if (!gameConfigManager.PlayerHasConfigWriter(playerID)) {
+                    player.sendMessage(ChatColor.RED + "Sie besitzen zurzeit keinen Config-Ersteller");
+                }
+                gameConfigManager.RemoveConfigWriter(playerID);
+
+                if (!gameConfigManager.PlayerHasConfigWriter(playerID))
+                    player.sendMessage(ChatColor.GREEN + "Config-Ersteller erfolgreich gelöscht");
+                else player.sendMessage(ChatColor.RED + "Fehler beim löschen ihres Config-Erstellers");
+
+            } else if (args[0].equalsIgnoreCase("remove")) {
                 String name = args[1];
 
                 if (lobbyManager.GameExist(name)) {
@@ -45,7 +59,7 @@ public class CasinoCommand implements CommandExecutor {
             if (args[0].equalsIgnoreCase("create")) {
                 String name = args[2];
 
-                if (gameConfigManager.PlayerHasConfigWriter(player.getUniqueId())) {
+                if (gameConfigManager.PlayerHasConfigWriter(playerID)) {
                     player.sendMessage("Sie erstellen bereits ein Spiel");
                     return false;
                 } else if (lobbyManager.GameExist(name)) {
@@ -61,7 +75,7 @@ public class CasinoCommand implements CommandExecutor {
                         lobbyManager.AddGame(new Poker(name, facingBlock.getLocation(), 10, 50, 100, 1, 4, 20, 5), name);
                         break;
                     case "blackjack":
-                        gameConfigManager.AddConfigWriter(player.getUniqueId(), new BlackJackConfigWriter(player.getUniqueId(),
+                        gameConfigManager.AddConfigWriter(playerID, new BlackJackConfigWriter(playerID,
                                 new GameConfig(name, Integer.parseInt(args[3]), Integer.parseInt(args[4]), facingBlock.getLocation()), gameConfigManager));
                         break;
 

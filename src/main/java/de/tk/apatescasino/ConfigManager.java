@@ -4,7 +4,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.bukkit.plugin.Plugin;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -26,10 +29,12 @@ public class ConfigManager<T> {
             plugin.saveResource(configFile.getName(), false);
     }
 
-    public void loadConfig(Type type) throws FileNotFoundException, UnsupportedEncodingException {
+    public void loadConfig(Type type) throws IOException {
         // Only load config if there is some kind of file
         if (configFile.exists()) {
-            configObject = gson.fromJson(new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8), type);
+            InputStreamReader inputStreamReader = new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8);
+            configObject = gson.fromJson(inputStreamReader, type);
+            inputStreamReader.close();
         }
     }
 
@@ -49,8 +54,9 @@ public class ConfigManager<T> {
         if (!configFile.getParentFile().exists()) {
             configFile.getParentFile().mkdirs();
         }
-        configFile.delete();
+
         try {
+            Files.delete(configFile.toPath());
             Files.write(configFile.toPath(), json.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
             return true;
         } catch (IOException e) {

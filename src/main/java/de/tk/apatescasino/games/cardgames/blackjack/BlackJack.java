@@ -50,14 +50,14 @@ public class BlackJack implements Game {
 
     private final Economy economy;
     private final BankAccountHandler bank;
-    private final int minBet = 10;
-    private final int maxBet = 1000;
+    private final int minBet;
+    private final int maxBet;
 
     private BlackJackGameState gameState;
     private Integer currentPlayer;
     private BukkitTask turnTimer;
-    private final Integer turnTime = 30;
-    private final Integer preparingTime = 20;
+    private final Integer turnTime;
+    private final Integer preparingTime;
 
 
     private final Map<UUID, BlackJackPlayer> playerMap;
@@ -73,12 +73,16 @@ public class BlackJack implements Game {
     TextLine playerLine;
     TextLine playerCardsLine;
 
-    public BlackJack(String id, int minPlayers, int maxPlayers, Location joinBlockPosition) {
+    public BlackJack(String id, int minPlayers, int maxPlayers, Location joinBlockPosition, int minBet, int maxBet, int preparingTime, int turnTime) {
         this.minPlayers = minPlayers;
         this.maxPlayers = maxPlayers;
         this.joinBlockPosition = joinBlockPosition;
         this.lobby = new Lobby(maxPlayers, minPlayers, id);
         this.bank = ApatesCasino.getBankAccountHandler();
+        this.minBet = minBet;
+        this.maxBet = maxBet;
+        this.preparingTime = preparingTime;
+        this.turnTime = turnTime;
 
         playerMap = new HashMap<>();
         cardDeck = new CardDeck();
@@ -87,6 +91,7 @@ public class BlackJack implements Game {
         croupierCardsValue = 0;
         gameState = BlackJackGameState.WAITING;
 
+        // initialize hologram
         Location location = new Location(joinBlockPosition.getWorld(), joinBlockPosition.getBlockX() + 0.5, joinBlockPosition.getBlockY() + 2.5, joinBlockPosition.getBlockZ() + 0.5);
         hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), location);
 
@@ -113,11 +118,13 @@ public class BlackJack implements Game {
         BukkitScheduler scheduler = getServer().getScheduler();
         scheduler.scheduleSyncDelayedTask(ApatesCasino.getInstance(), () -> {
 
+            // Inform all player which didn't bet and remove them from the game
             for (BlackJackPlayer player : playerMap.values().stream().filter(p -> p.GetStake() == 0).collect(Collectors.toList())) {
                 player.Player.sendMessage(ChatColor.RED + "Sie haben leider keinen Einsatz platziert");
                 RemovePlayer(player.Player.getUniqueId());
             }
 
+            // Start game if enough players are in the lobby, else wait for them
             if (playerMap.values().size() >= minPlayers) startNewGame();
             else waitingForPlayers();
 
