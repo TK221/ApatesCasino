@@ -1,5 +1,7 @@
 package de.tk.apatescasino;
 
+import de.tk.apatescasino.bank.BankAccountHandler;
+import de.tk.apatescasino.games.ChatMessageHandler;
 import de.tk.apatescasino.games.Game;
 import de.tk.apatescasino.games.GameListener;
 import de.tk.apatescasino.games.cardgames.blackjack.BlackJackListener;
@@ -19,10 +21,12 @@ public final class ApatesCasino extends JavaPlugin {
 
     private static ApatesCasino instance;
 
+    private static Economy econ = null;
+
     private final LobbyManager lobbyManager = new LobbyManager();
     private final GameConfigManager gameConfigManager = new GameConfigManager(lobbyManager);
     private static BankAccountHandler bankAccountHandler;
-    private static Economy econ = null;
+    private final static ChatMessageHandler chatMessageHandler = new ChatMessageHandler();
 
     @Override
     public void onEnable() {
@@ -73,5 +77,9 @@ public final class ApatesCasino extends JavaPlugin {
 
     public static BankAccountHandler getBankAccountHandler() {
         return bankAccountHandler;
+    }
+
+    public static ChatMessageHandler GetChatMessageHandler() {
+        return chatMessageHandler;
     }
 }

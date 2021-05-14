@@ -68,20 +68,17 @@ public class GameListener implements Listener {
 
     @EventHandler
     public void onPlayerMessage(AsyncPlayerChatEvent event) {
-        UUID playerID = event.getPlayer().getUniqueId();
+        Player player = event.getPlayer();
         String message = event.getMessage();
 
-        Game game = lobbyManager.GetGameByPlayer(playerID);
+        if (ApatesCasino.GetChatMessageHandler().HandleChat(player, message)) event.setCancelled(true);
 
-        if (game == null && gameConfigManager.PlayerHasConfigWriter(playerID)) {
+        if (gameConfigManager.PlayerHasConfigWriter(player.getUniqueId())) {
             new BukkitRunnable() {
-
                 @Override
                 public void run() {
-                    // What you want to schedule goes here
-                    gameConfigManager.PlayerSendMessage(playerID, message);
+                    gameConfigManager.PlayerSendMessage(player.getUniqueId(), message);
                 }
-
             }.runTask(ApatesCasino.getInstance());
 
             event.setCancelled(true);

@@ -56,7 +56,7 @@ public class ConfigManager<T> {
         }
 
         try {
-            Files.delete(configFile.toPath());
+            if (Files.exists(configFile.toPath())) Files.delete(configFile.toPath());
             Files.write(configFile.toPath(), json.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
             return true;
         } catch (IOException e) {

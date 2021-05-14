@@ -106,8 +106,7 @@ public class BlackJackConfigWriter implements GameConfigWriter {
         Player player = Bukkit.getServer().getPlayer(playerID);
         if (player == null) return;
 
-        StringBuilder message = new StringBuilder(ChatColor.BLUE.toString());
-
+        StringBuilder message = new StringBuilder(ChatColor.AQUA.toString());
 
         switch (currInputType) {
             case MAINSCREEN:
