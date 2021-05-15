@@ -217,7 +217,6 @@ public class Poker implements Game {
                     playerList.values().forEach(p -> p.Player.sendMessage(ChatColor.YELLOW + countDownNumber.toString() + " Sekunden bis zum Start der nächsten Runde"));
 
                 countDownNumber--;
-                System.out.println(countDownNumber);
             }
         }.runTaskTimer(ApatesCasino.getInstance(), 0L, 20L);
     }

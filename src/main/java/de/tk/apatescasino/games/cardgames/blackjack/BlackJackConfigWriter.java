@@ -91,15 +91,16 @@ public class BlackJackConfigWriter implements GameConfigWriter {
 
     private void increaseInputType() {
         if (currInputType != null) {
-            if (currInputType.ordinal() < inputTypes.values().length - 1)
+            if (currInputType.ordinal() < inputTypes.values().length - 1) {
                 currInputType = inputTypes.values()[currInputType.ordinal() + 1];
-            else {
+                sendInformationMessage();
+
+            } else {
                 Game game = new BlackJack(config.GameID, config.MinPlayers, config.MaxPlayers, config.JoinBlockPosition.GetLocation(),
                         config.minBet, config.maxBet, config.preparingTime, config.turnTime);
                 gameConfigManager.CreateNewGame(config, game, playerID);
             }
         }
-        sendInformationMessage();
     }
 
     private void sendInformationMessage() {
