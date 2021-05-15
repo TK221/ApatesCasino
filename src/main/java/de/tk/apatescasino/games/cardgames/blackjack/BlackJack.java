@@ -287,7 +287,7 @@ public class BlackJack implements Game {
     private void waitingForPlayers() {
         gameState = BlackJackGameState.WAITING;
 
-        croupierLine.setText(ChatColor.DARK_PURPLE + "Croupier:");
+        croupierLine.setText(ChatColor.WHITE + "-----");
         croupierCardsLine.setText("");
         playerLine.setText(ChatColor.YELLOW + "Zurzeit kein Spiel im Gange");
         playerCardsLine.setText("");
@@ -390,7 +390,7 @@ public class BlackJack implements Game {
     }
 
     private void updateHologram() {
-        if (gameState.equals(BlackJackGameState.ONGOING)) {
+        if (!gameState.equals(BlackJackGameState.WAITING)) {
             croupierLine.setText(ChatColor.RED + "Croupier: ");
             croupierCardsLine.setText(Card.GetCardsAsText(croupierCards) + ChatColor.WHITE + " - Kartenwet: " + croupierCardsValue);
 
@@ -405,6 +405,8 @@ public class BlackJack implements Game {
                 playerCardsLine.setText("");
             }
         } else {
+            croupierLine.setText(ChatColor.WHITE + "-----");
+            croupierCardsLine.setText("");
             playerLine.setText("");
             playerCardsLine.setText("");
         }

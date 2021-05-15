@@ -45,7 +45,7 @@ public final class ApatesCasino extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PokerListener(lobbyManager), this);
         getServer().getPluginManager().registerEvents(new BlackJackListener(lobbyManager), this);
 
-        Objects.requireNonNull(this.getCommand("casino")).setExecutor(new CasinoCommand(lobbyManager, gameConfigManager));
+        Objects.requireNonNull(this.getCommand("casino")).setExecutor(new CasinoCommand(lobbyManager, gameConfigManager, bankAccountHandler));
 
         gameConfigManager.CreateAllGames();
     }

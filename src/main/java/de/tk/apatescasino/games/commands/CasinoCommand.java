@@ -1,5 +1,6 @@
 package de.tk.apatescasino.games.commands;
 
+import de.tk.apatescasino.bank.BankAccountHandler;
 import de.tk.apatescasino.games.cardgames.blackjack.BlackJackConfigWriter;
 import de.tk.apatescasino.games.cardgames.poker.Poker;
 import de.tk.apatescasino.games.config.GameConfig;
@@ -18,10 +19,12 @@ public class CasinoCommand implements CommandExecutor {
 
     private final LobbyManager lobbyManager;
     private final GameConfigManager gameConfigManager;
+    private final BankAccountHandler bankAccountHandler;
 
-    public CasinoCommand(LobbyManager lobbyManager, GameConfigManager gameConfigManager) {
+    public CasinoCommand(LobbyManager lobbyManager, GameConfigManager gameConfigManager, BankAccountHandler bankAccountHandler) {
         this.lobbyManager = lobbyManager;
         this.gameConfigManager = gameConfigManager;
+        this.bankAccountHandler = bankAccountHandler;
     }
 
     @Override
@@ -31,7 +34,14 @@ public class CasinoCommand implements CommandExecutor {
         UUID playerID = player.getUniqueId();
         Block facingBlock = player.getTargetBlock(null, 10);
 
-        if (args.length == 2) {
+        if (args.length == 1) {
+            if (args[0].equalsIgnoreCase("balance")) {
+                bankAccountHandler.writeBalance(player);
+
+            } else if (args[0].equalsIgnoreCase("transactions")) {
+                bankAccountHandler.writeLastTransactions(player);
+            }
+        } else if (args.length == 2) {
             if (args[0].equalsIgnoreCase("create") && args[1].equalsIgnoreCase("cancel")) {
 
                 if (!gameConfigManager.PlayerHasConfigWriter(playerID)) {
