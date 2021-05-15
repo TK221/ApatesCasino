@@ -6,6 +6,8 @@ import de.tk.apatescasino.ConfigManager;
 import de.tk.apatescasino.games.GameType;
 import de.tk.apatescasino.games.cardgames.blackjack.BlackJack;
 import de.tk.apatescasino.games.cardgames.blackjack.BlackJackConfig;
+import de.tk.apatescasino.games.cardgames.poker.Poker;
+import de.tk.apatescasino.games.cardgames.poker.PokerConfig;
 import de.tk.apatescasino.games.lobby.LobbyManager;
 
 import java.io.IOException;
@@ -22,44 +24,56 @@ public class GameConfigProvider {
 
 
     public boolean AddNewConfig(GameConfig config) {
-        if (config instanceof BlackJackConfig) {
-            try {
+        try {
+            if (config instanceof PokerConfig) {
+
+                HashMap<String, PokerConfig> pokerConfigs = loadPokerConfigs();
+
+                if (!pokerConfigs.containsKey(config.GameID))
+                    pokerConfigs.put(config.GameID, (PokerConfig) config);
+
+                savePokerConfigs(pokerConfigs);
+                return true;
+
+            } else if (config instanceof BlackJackConfig) {
+
                 HashMap<String, BlackJackConfig> blackJackConfigs = loadBlackJackConfigs();
 
                 if (!blackJackConfigs.containsKey(config.GameID))
                     blackJackConfigs.put(config.GameID, (BlackJackConfig) config);
 
                 saveBlackJackConfigs(blackJackConfigs);
-            } catch (Exception e) {
-                System.out.println("Error while trying to create new game config: " + e.getMessage());
+                return true;
+
+            } else {
                 return false;
             }
-        } else {
+        } catch (Exception e) {
+            System.out.println("Error while trying to create new game config: " + e.getMessage());
             return false;
         }
-
-        return true;
     }
 
     public boolean RemoveConfig(String gameID, GameType gameType) {
-        switch (gameType) {
-
-            case POKER:
-                break;
-            case BLACKJACK:
-                try {
+        try {
+            switch (gameType) {
+                case POKER:
+                    HashMap<String, PokerConfig> pokerConfigs = loadPokerConfigs();
+                    pokerConfigs.remove(gameID);
+                    savePokerConfigs(pokerConfigs);
+                    break;
+                case BLACKJACK:
                     HashMap<String, BlackJackConfig> blackJackConfigs = loadBlackJackConfigs();
                     blackJackConfigs.remove(gameID);
-
                     saveBlackJackConfigs(blackJackConfigs);
-                } catch (Exception e) {
-                    System.out.println("Error while removing game config: " + e.getMessage());
-                    return false;
-                }
-                break;
-        }
+                    break;
+            }
+            return true;
 
-        return true;
+        } catch (Exception e) {
+            System.out.println("Error while removing game config: " + e.getMessage());
+            return false;
+        }
     }
 
     public void CreateGames() {
@@ -70,7 +84,7 @@ public class GameConfigProvider {
         }
     }
 
-
+    // ---- BlackJack -----
     private HashMap<String, BlackJackConfig> loadBlackJackConfigs() throws IOException {
         ConfigManager<HashMap<String, BlackJackConfig>> configManager = new ConfigManager<>(getGameConfigPath(GameType.BLACKJACK), ApatesCasino.getInstance());
         configManager.loadConfig(new TypeToken<HashMap<String, BlackJackConfig>>() {
@@ -89,8 +103,31 @@ public class GameConfigProvider {
 
     private void createBlackJackGame(BlackJackConfig config) {
         lobbyManager.AddGame(new BlackJack(config.GameID, config.MinPlayers, config.MaxPlayers, config.JoinBlockPosition.GetLocation(),
-                config.minBet, config.maxBet, config.preparingTime, config.turnTime), config.GameID);
+                config.MinBet, config.MaxBet, config.PreparingTime, config.TurnTime), config.GameID);
     }
+
+    // ---- Poker ----
+    private HashMap<String, PokerConfig> loadPokerConfigs() throws IOException {
+        ConfigManager<HashMap<String, PokerConfig>> configManager = new ConfigManager<>(getGameConfigPath(GameType.POKER), ApatesCasino.getInstance());
+        configManager.loadConfig(new TypeToken<HashMap<String, PokerConfig>>() {
+        }.getType());
+
+        HashMap<String, PokerConfig> pokerConfigs = configManager.getObject();
+
+        return pokerConfigs != null ? pokerConfigs : new HashMap<>();
+    }
+
+    private void savePokerConfigs(HashMap<String, PokerConfig> pokerConfigs) {
+        ConfigManager<HashMap<String, PokerConfig>> configManager = new ConfigManager<>(getGameConfigPath(GameType.POKER), ApatesCasino.getInstance());
+        configManager.setObject(pokerConfigs);
+        configManager.saveConfig();
+    }
+
+    private void createPokerGame(PokerConfig config) {
+        lobbyManager.AddGame(new Poker(config.GameID, config.JoinBlockPosition.GetLocation(), config.SmallBlind, config.BigBlind,
+                config.MinMoney, config.MinPlayers, config.MaxPlayers, config.TurnTime, config.PreparingTime), config.GameID);
+    }
+
 
     private static String getGameConfigPath(GameType gameType) {
         String path = gameType.toString().toLowerCase();

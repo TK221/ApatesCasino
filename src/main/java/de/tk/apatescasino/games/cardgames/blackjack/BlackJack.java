@@ -328,7 +328,7 @@ public class BlackJack implements Game {
             player.Player.sendMessage(ChatColor.RED + "Sie haben sich überkauft, Ihr Geld geht and den Croupier");
 
             turnTimer.cancel();
-            startTurnTimer(5);
+            startTurnTimer(3);
         }
 
         updateHologram();
@@ -486,7 +486,7 @@ public class BlackJack implements Game {
 
         // Reject player to specific conditions
         if (gameState.equals(BlackJackGameState.ONGOING)) {
-            player.sendMessage("Bitte warten Sie bis zur Vorbereitungsphase, bevor sie diesem Spiel erneut beitreten wollen");
+            player.sendMessage("Bitte warten Sie bis zur Vorbereitungsphase, bevor sie diesem Spiel erneut beitreten");
             return;
         } else if (playerMap.containsKey(playerID)) {
             player.sendMessage(ChatColor.YELLOW + "Du bist bereits mitglied dieses Spiels");

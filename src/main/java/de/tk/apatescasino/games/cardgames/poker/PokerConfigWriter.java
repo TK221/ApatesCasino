@@ -1,4 +1,4 @@
-package de.tk.apatescasino.games.cardgames.blackjack;
+package de.tk.apatescasino.games.cardgames.poker;
 
 import de.tk.apatescasino.games.Game;
 import de.tk.apatescasino.games.config.GameConfig;
@@ -12,28 +12,29 @@ import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
-
-public class BlackJackConfigWriter implements GameConfigWriter {
-
+public class PokerConfigWriter implements GameConfigWriter {
     private enum inputTypes {
         MAINSCREEN,
-        MINBET,
-        MAXBET,
+        SMALLLBLIND,
+        BIGBLIND,
+        MINMONEY,
+        MAXMONEY,
+        FEE,
         PREPARINGTIME,
         TURNTIME
     }
 
     GameConfigManager gameConfigManager;
-    private final BlackJackConfig config;
+    private final PokerConfig config;
     private final UUID playerID;
 
     private inputTypes currInputType;
 
-    public BlackJackConfigWriter(UUID playerID, GameConfig gameConfig, GameConfigManager gameConfigManager) {
+    public PokerConfigWriter(UUID playerID, GameConfig gameConfig, GameConfigManager gameConfigManager) {
         this.playerID = playerID;
         this.gameConfigManager = gameConfigManager;
 
-        config = new BlackJackConfig(gameConfig);
+        config = new PokerConfig(gameConfig);
         currInputType = inputTypes.values()[0];
 
         sendInformationMessage();
@@ -56,34 +57,50 @@ public class BlackJackConfigWriter implements GameConfigWriter {
     @Override
     public void AddMessage(String message) {
         switch (currInputType) {
-            case MINBET:
-                Integer minBet = GameConfigManager.convertStringToInteger(message);
-                if (minBet != null && minBet >= 0) {
-                    config.MinBet = minBet;
+
+            case SMALLLBLIND:
+                Integer smallBlind = GameConfigManager.convertStringToInteger(message);
+                if (smallBlind != null && smallBlind > 0) {
+                    config.SmallBlind = smallBlind;
                     break;
                 }
-            case MAXBET:
-                Integer maxBet = GameConfigManager.convertStringToInteger(message);
-                if (maxBet != null && maxBet >= config.MinBet) {
-                    config.MaxBet = maxBet;
+            case BIGBLIND:
+                Integer bigBlind = GameConfigManager.convertStringToInteger(message);
+                if (bigBlind != null && bigBlind >= config.SmallBlind) {
+                    config.BigBlind = bigBlind;
+                    break;
+                }
+            case MINMONEY:
+                Integer minMoney = GameConfigManager.convertStringToInteger(message);
+                if (minMoney != null && minMoney > 0) {
+                    config.MinMoney = minMoney;
+                    break;
+                }
+            case MAXMONEY:
+                Integer maxMoney = GameConfigManager.convertStringToInteger(message);
+                if (maxMoney != null && maxMoney >= config.MinMoney) {
+                    config.MaxMoney = maxMoney;
+                    break;
+                }
+            case FEE:
+                Double fee = GameConfigManager.convertStringToDouble(message);
+                if (fee != null && fee >= 0 && fee < 1) {
+                    config.Fee = fee;
                     break;
                 }
             case PREPARINGTIME:
                 Integer preparingTime = GameConfigManager.convertStringToInteger(message);
-                if (preparingTime != null && preparingTime >= 0) {
+                if (preparingTime != null && preparingTime > 0) {
                     config.PreparingTime = preparingTime;
                     break;
                 }
             case TURNTIME:
                 Integer turnTime = GameConfigManager.convertStringToInteger(message);
-                if (turnTime != null && turnTime >= 0) {
+                if (turnTime != null && turnTime > 0) {
                     config.TurnTime = turnTime;
                     break;
                 }
-
-            default:
-                sendInformationMessage();
-                return;
+                break;
         }
 
         increaseInputType();
@@ -96,8 +113,8 @@ public class BlackJackConfigWriter implements GameConfigWriter {
                 sendInformationMessage();
 
             } else {
-                Game game = new BlackJack(config.GameID, config.MinPlayers, config.MaxPlayers, config.JoinBlockPosition.GetLocation(),
-                        config.MinBet, config.MaxBet, config.PreparingTime, config.TurnTime);
+                Game game = new Poker(config.GameID, config.JoinBlockPosition.GetLocation(), config.SmallBlind, config.BigBlind,
+                        config.MinMoney, config.MinPlayers, config.MaxPlayers, config.TurnTime, config.PreparingTime);
                 gameConfigManager.CreateNewGame(config, game, playerID);
             }
         }
@@ -110,22 +127,30 @@ public class BlackJackConfigWriter implements GameConfigWriter {
         StringBuilder message = new StringBuilder(ChatColor.AQUA.toString());
 
         switch (currInputType) {
+
             case MAINSCREEN:
                 message.append("Bitte geben sie die Position der Spielanzeige ein");
                 break;
-            case MINBET:
-                message.append("Bitte geben sie den Mindesteinsatz ein");
+            case SMALLLBLIND:
+                message.append("Bitte geben sie den Small-Blind ein");
                 break;
-            case MAXBET:
-                message.append("Bitte geben sie den Maximaleinsatz ein");
+            case BIGBLIND:
+                message.append("Bitte geben sie den Big-Blind ein");
+                break;
+            case MINMONEY:
+                message.append("Bitte geben sie den Mindesteinsatz für das Spiel ein");
+                break;
+            case MAXMONEY:
+                message.append("Bitte geben sie den Maximaleinsatz für das Spiel ein");
+                break;
+            case FEE:
+                message.append("Bitte geben sie den Gebührenwert in Dezimal ein");
                 break;
             case PREPARINGTIME:
-                message.append("Bitte geben sie die Runden-Wartezeit ein");
+                message.append("Bitte geben sie die Vorbereitungszeit ein");
                 break;
             case TURNTIME:
-                message.append("Bitte geben sie die Spieler-Zugzeit ein");
-                break;
-            default:
+                message.append("Bitte geben sie die Spielerzeit ein");
                 break;
         }
 

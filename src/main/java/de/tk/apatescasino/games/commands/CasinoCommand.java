@@ -2,7 +2,7 @@ package de.tk.apatescasino.games.commands;
 
 import de.tk.apatescasino.bank.BankAccountHandler;
 import de.tk.apatescasino.games.cardgames.blackjack.BlackJackConfigWriter;
-import de.tk.apatescasino.games.cardgames.poker.Poker;
+import de.tk.apatescasino.games.cardgames.poker.PokerConfigWriter;
 import de.tk.apatescasino.games.config.GameConfig;
 import de.tk.apatescasino.games.config.GameConfigManager;
 import de.tk.apatescasino.games.lobby.LobbyManager;
@@ -82,7 +82,8 @@ public class CasinoCommand implements CommandExecutor {
 
                 switch (args[1].toLowerCase()) {
                     case "poker":
-                        lobbyManager.AddGame(new Poker(name, facingBlock.getLocation(), 10, 50, 100, 1, 4, 20, 5), name);
+                        gameConfigManager.AddConfigWriter(playerID, new PokerConfigWriter(playerID,
+                                new GameConfig(name, Integer.parseInt(args[3]), Integer.parseInt(args[4]), facingBlock.getLocation()), gameConfigManager));
                         break;
                     case "blackjack":
                         gameConfigManager.AddConfigWriter(playerID, new BlackJackConfigWriter(playerID,

@@ -67,4 +67,10 @@ public class GameConfigManager {
             return Integer.parseInt(message);
         } else return null;
     }
+
+    public static Double convertStringToDouble(String message) {
+        if (message.matches("(\\-?\\d*\\.?\\d+)")) {
+            return Double.parseDouble(message);
+        } else return null;
+    }
 }
