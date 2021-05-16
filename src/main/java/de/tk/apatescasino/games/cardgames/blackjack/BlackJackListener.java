@@ -25,7 +25,7 @@ public class BlackJackListener implements Listener {
         UUID playerID = player.getUniqueId();
         int slot = player.getInventory().getHeldItemSlot();
 
-        if (event.getHand() == EquipmentSlot.HAND) {
+        if (event.getHand() == EquipmentSlot.HAND && player.getInventory().getItem(slot) != null) {
             Game playerGame = lobbyManager.GetGameByPlayer(playerID);
 
             if (playerGame instanceof BlackJack) {

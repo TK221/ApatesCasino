@@ -79,6 +79,7 @@ public class GameConfigProvider {
     public void CreateGames() {
         try {
             for (BlackJackConfig config : loadBlackJackConfigs().values()) createBlackJackGame(config);
+            for (PokerConfig config : loadPokerConfigs().values()) createPokerGame(config);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }

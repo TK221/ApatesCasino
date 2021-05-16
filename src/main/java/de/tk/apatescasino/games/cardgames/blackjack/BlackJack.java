@@ -41,9 +41,9 @@ public class BlackJack implements Game {
     private final int maxPlayers;
     private final Location joinBlockPosition;
 
-    private final ItemStack HIT_ITEM = ItemStackBuilder.createItemStack(Material.PINK_DYE, 1, (ChatColor.DARK_GREEN + "HIT"), new String[]{"Hole dir eine weitere Karte"});
-    private final ItemStack STAND_ITEM = ItemStackBuilder.createItemStack(Material.LIME_DYE, 1, (ChatColor.DARK_BLUE + "STAND"), new String[]{"Beende deinen Zug"});
-    private final ItemStack LEAVE_ITEM = ItemStackBuilder.createItemStack(Material.BARRIER, 1, (ChatColor.RED + "Leave"), new String[]{"Verlasse das Spiel"});
+    private final ItemStack HIT_ITEM = ItemStackBuilder.createItemStack(Material.PINK_DYE, 1, (ChatColor.DARK_GREEN + "HIT"), new String[]{"Hole eine weitere Karte"});
+    private final ItemStack STAND_ITEM = ItemStackBuilder.createItemStack(Material.LIME_DYE, 1, (ChatColor.DARK_BLUE + "STAND"), new String[]{"Beende den Zug"});
+    private final ItemStack LEAVE_ITEM = ItemStackBuilder.createItemStack(Material.RED_DYE, 1, (ChatColor.RED + "Leave"), new String[]{"Verlasse das Spiel"});
 
     private final Economy economy;
     private final BankAccountHandler bank;
@@ -124,7 +124,6 @@ public class BlackJack implements Game {
                     for (BlackJackPlayer player : playerMap.values()) {
                         lobby.ChangePlayerState(player.Player.getUniqueId(), PlayerState.UNREADY);
                     }
-
                 }
 
                 if (timer <= 0) {
@@ -154,7 +153,7 @@ public class BlackJack implements Game {
                 if (currentPlayer != 0) {
                     BlackJackPlayer player = getPlayerByNumber(currentPlayer);
                     if (player != null) {
-                        player.Player.sendMessage(ChatColor.RED + "Ihre Zeit ist um und Ihr Zug ist beendet");
+                        player.Player.sendMessage(ChatColor.RED + "Ihre Zeit ist um und Ihr Zug beendet");
                         playerStand();
                     }
                 }
@@ -221,7 +220,7 @@ public class BlackJack implements Game {
         player.state = BlackJackPlayerState.BETTING;
         setBettingBar(player);
 
-        player.Player.sendMessage(ChatColor.GREEN + "Sie sind nun am Zug");
+        player.Player.sendMessage(ChatColor.YELLOW + "Sie sind nun am Zug und haben " + turnTime + " Sek Zeit");
 
         startTurnTimer(turnTime);
     }
@@ -231,7 +230,7 @@ public class BlackJack implements Game {
         croupierCardsValue = BlackJackPlayer.getCalculatedCardsValue(croupierCards);
 
         if (croupierCardsValue < 17) {
-            startTurnTimer(5);
+            startTurnTimer(3);
         } else {
             endGame();
         }
@@ -440,7 +439,17 @@ public class BlackJack implements Game {
 
                         lobby.ChangePlayerState(player.getUniqueId(), PlayerState.READY);
                     }
+                } else {
+                    player.sendMessage(ChatColor.RED + "Geben sie bitte einen passenden Betrag ein (MIN: " + ChatColor.GOLD + minBet + ChatColor.AQUA +
+                            " | MAX: " + ChatColor.GOLD + maxBet + ChatColor.AQUA + ")");
+
+                    waitForPlayerBetMessage(player);
                 }
+            } else {
+                player.sendMessage(ChatColor.RED + "Geben sie bitte einen passenden Betrag ein (MIN: " + ChatColor.GOLD + minBet + ChatColor.AQUA +
+                        " | MAX: " + ChatColor.GOLD + maxBet + ChatColor.AQUA + ")");
+
+                waitForPlayerBetMessage(player);
             }
         });
     }
@@ -489,13 +498,13 @@ public class BlackJack implements Game {
             player.sendMessage("Bitte warten Sie bis zur Vorbereitungsphase, bevor sie diesem Spiel erneut beitreten");
             return;
         } else if (playerMap.containsKey(playerID)) {
-            player.sendMessage(ChatColor.YELLOW + "Du bist bereits mitglied dieses Spiels");
+            player.sendMessage(ChatColor.YELLOW + "Sie sind bereits mitglied dieses Spiels");
             return;
         } else if (playerMap.size() >= maxPlayers) {
             player.sendMessage(ChatColor.RED + "Das Spiel besitz bereits die maximale Anzahl an Spielern");
             return;
         } else if (economy.getBalance(player) <= minBet) {
-            player.sendMessage(ChatColor.RED + "Du hast leider nicht genügend Geld, um diesem Spiel beizutreten");
+            player.sendMessage(ChatColor.RED + "Sie haben leider nicht genügend Geld, um diesem Spiel beizutreten");
             return;
         }
 
@@ -511,7 +520,7 @@ public class BlackJack implements Game {
 
         // Send failure message
         if (playerNumber == 0) {
-            player.sendMessage(ChatColor.RED + "Beim betreten dieses Spiels ist etwas schief gelaufen");
+            player.sendMessage(ChatColor.RED + "Beim betreten dieses Spiels, sind unerwartete Fehler aufgetreten");
         }
 
         // Add player to lobby
@@ -522,14 +531,25 @@ public class BlackJack implements Game {
 
         // Create Player
         playerMap.put(playerID, new BlackJackPlayer(player, playerNumber));
-        setWaitingBar(playerMap.get(playerID));
-        player.sendMessage(ChatColor.GREEN + "Du bist nun mitglied dieses Spiels");
+        player.sendMessage(ChatColor.GREEN + "Sie sind nun mitglied dieses Spiels");
 
         waitForPlayerBetMessage(player);
 
         if (gameState.equals(BlackJackGameState.WAITING) && playerMap.values().size() >= minPlayers) {
             startPreparingTimer();
         }
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                BlackJackPlayer blackJackPlayer = playerMap.get(playerID);
+                if (blackJackPlayer != null && blackJackPlayer.state == BlackJackPlayerState.PREPARING) {
+                    setWaitingBar(playerMap.get(playerID));
+                }
+            }
+        }.runTaskLater(ApatesCasino.getInstance(), 2 * 20L);
+
+
     }
 
     @Override
@@ -544,7 +564,7 @@ public class BlackJack implements Game {
             }
             player.ResetStake();
 
-            player.Player.sendMessage(ChatColor.RED + "Du hast das BlackJack Spiel verlassen!");
+            player.Player.sendMessage(ChatColor.RED + "Sie haben das Spiel verlassen!");
             clearHotBar(player);
 
             PlayerInventorySaver.setPlayerInventory(player.Player);
