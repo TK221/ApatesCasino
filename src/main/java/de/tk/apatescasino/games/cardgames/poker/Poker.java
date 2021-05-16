@@ -413,7 +413,13 @@ public class Poker implements Game {
         }
 
         playerProperties.State = PlayerPokerState.RAISING;
-        setBetItemBar(playerProperties);
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                setBetItemBar(playerProperties);
+            }
+        }.runTaskLater(ApatesCasino.getInstance(), 20L);
+
     }
 
     private boolean playerRaise(PokerPlayerProperties playerProperties, int amount) {

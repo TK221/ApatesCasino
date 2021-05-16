@@ -38,25 +38,33 @@ public class BankAccountHandler {
 
 
     public void transferToPlayer(Player player, int amount) {
-        econ.depositPlayer(player, amount);
-        econ.bankWithdraw(CASINO_BANK_ACCOUNT, amount);
-        addTransaction(new Transaction(false, player.getDisplayName(), amount, LocalDateTime.now().format(formatter), getBalance()));
+        if (amount > 0) {
+            econ.depositPlayer(player, amount);
+            econ.bankWithdraw(CASINO_BANK_ACCOUNT, amount);
+            addTransaction(new Transaction(false, player.getDisplayName(), amount, LocalDateTime.now().format(formatter), getBalance()));
+        }
     }
 
     public void transferToCasino(Player player, int amount) {
-        econ.withdrawPlayer(player, amount);
-        econ.bankDeposit(CASINO_BANK_ACCOUNT, amount);
-        addTransaction(new Transaction(true, player.getDisplayName(), amount, LocalDateTime.now().format(formatter), getBalance()));
+        if (amount > 0) {
+            econ.withdrawPlayer(player, amount);
+            econ.bankDeposit(CASINO_BANK_ACCOUNT, amount);
+            addTransaction(new Transaction(true, player.getDisplayName(), amount, LocalDateTime.now().format(formatter), getBalance()));
+        }
     }
 
     public void deposit(int amount) {
-        econ.bankDeposit(CASINO_BANK_ACCOUNT, amount);
-        addTransaction(new Transaction(true, "ANONYMOUS", amount, LocalDateTime.now().format(formatter), getBalance()));
+        if (amount > 0) {
+            econ.bankDeposit(CASINO_BANK_ACCOUNT, amount);
+            addTransaction(new Transaction(true, "ANONYMOUS", amount, LocalDateTime.now().format(formatter), getBalance()));
+        }
     }
 
     public void withdraw(int amount) {
-        econ.bankWithdraw(CASINO_BANK_ACCOUNT, amount);
-        addTransaction(new Transaction(false, "ANONYMOUS", amount, LocalDateTime.now().format(formatter), getBalance()));
+        if (amount > 0) {
+            econ.bankWithdraw(CASINO_BANK_ACCOUNT, amount);
+            addTransaction(new Transaction(false, "ANONYMOUS", amount, LocalDateTime.now().format(formatter), getBalance()));
+        }
     }
 
     public int getBalance() {

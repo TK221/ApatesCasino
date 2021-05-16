@@ -26,14 +26,15 @@ public class PokerListener implements Listener {
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        UUID playerID = event.getPlayer().getUniqueId();
-        event.getPlayer().getInventory().getHeldItemSlot();
+        Player player = event.getPlayer();
+        UUID playerID = player.getUniqueId();
+        int slot = player.getInventory().getHeldItemSlot();
 
         Game game = lobbyManager.GetGameByPlayer(playerID);
 
-        if (event.getHand() == EquipmentSlot.HAND) {
+        if (event.getHand() == EquipmentSlot.HAND && player.getInventory().getItem(slot) != null) {
             if (game instanceof Poker) {
-                ((Poker) game).PlayerAction(playerID, event.getPlayer().getInventory().getHeldItemSlot());
+                ((Poker) game).PlayerAction(playerID, slot);
             }
         }
     }
