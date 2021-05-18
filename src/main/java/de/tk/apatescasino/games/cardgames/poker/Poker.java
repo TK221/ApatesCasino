@@ -69,6 +69,8 @@ class PokerPlayerProperties {
 
 public class Poker implements Game {
 
+    public static final String POKER_PREFIX = String.format("%sPoker%s >> ", ChatColor.DARK_PURPLE, ChatColor.WHITE);
+
     // Max and min player count which are allowed
     static final int MAX_GAME_PLAYERS = 10;
     static final int MIN_GAME_PLAYERS = 2;
@@ -170,7 +172,7 @@ public class Poker implements Game {
 
                     Player player = Bukkit.getPlayer(playerID);
                     if (player != null)
-                        player.sendMessage(ChatColor.RED + "Sie haben zu lange für Ihren Einsatz gebraucht und damit das Spiel verlassen");
+                        player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben zu lange für Ihren Einsatz gebraucht und damit das Spiel verlassen");
                 }
             }
         }, 30 * 20L);
@@ -225,7 +227,7 @@ public class Poker implements Game {
             @Override
             public void run() {
                 if (playerNumber != 0) {
-                    playerList.get(playerNumber).Player.sendMessage(ChatColor.RED + "Ihre Zeit ist um und der Zug beendet");
+                    playerList.get(playerNumber).Player.sendMessage(POKER_PREFIX + ChatColor.RED + "Ihre Zeit ist um und der Zug beendet");
                     playerFold(playerList.get(playerNumber));
                 }
                 nextPlayer();
@@ -276,7 +278,7 @@ public class Poker implements Game {
         PokerPlayerProperties playerProperties = playerList.get(playerOnTurn);
 
         playerProperties.State = PlayerPokerState.TURN;
-        playerProperties.Player.sendMessage(ChatColor.GREEN + "Sie sind nun am Zug");
+        playerProperties.Player.sendMessage(POKER_PREFIX + ChatColor.GREEN + "Sie sind nun am Zug");
         setActionItemBar(playerProperties);
         startTurnTime(playerOnTurn, 30);
 
@@ -343,7 +345,7 @@ public class Poker implements Game {
             List<PokerPlayerProperties> winners = playerWinOrder.get(0);
 
             String endMessage = getEndMessage(winners, oldPlayerBalance);
-            playerList.values().forEach(p -> p.Player.sendMessage(endMessage));
+            playerList.values().forEach(p -> p.Player.sendMessage(POKER_PREFIX + endMessage));
         }
 
         Set<Integer> playerNumbers = new HashSet<>(playerList.keySet());
@@ -560,7 +562,7 @@ public class Poker implements Game {
                 Economy econ = ApatesCasino.getEconomy();
 
                 if (econ.getBalance(player) < betHandler.minMoney) {
-                    player.sendMessage(ChatColor.RED + "Sie haben nicht genügend Geld um diesem Spiel beizutreten. Mindestens: " + betHandler.minMoney + " Tokens");
+                    player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben nicht genügend Geld um diesem Spiel beizutreten. Mindestens: " + betHandler.minMoney + " Tokens");
                     messageWaitingPlayers.remove(playerID);
                     return;
                 }
@@ -577,15 +579,15 @@ public class Poker implements Game {
                 messageWaitingPlayers.remove(playerID);
                 lobby.changePlayerState(playerID, PlayerState.READY);
 
-                player.sendMessage(ChatColor.GREEN + "Sie sind nun mit " + ChatColor.GOLD + amount + " Tokens" + ChatColor.GREEN + " im Spiel. Bitte warten sie auf beginn der nächsten Runde");
+                player.sendMessage(POKER_PREFIX + ChatColor.GREEN + "Sie sind nun mit " + ChatColor.GOLD + amount + " Tokens" + ChatColor.GREEN + " im Spiel. Bitte warten sie auf den Beginn der nächsten Runde");
 
                 PokerPlayerProperties playerProperties = getPlayerPropertiesByID(playerID);
                 if (playerProperties != null) setWaitingItemBar(playerProperties);
             } else {
-                player.sendMessage(ChatColor.RED + "Sie müssen mindestens" + ChatColor.GOLD + betHandler.minMoney + " Tokens" + ChatColor.RED + " zum Tisch mitbringen");
+                player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie müssen mindestens" + ChatColor.GOLD + betHandler.minMoney + " Tokens" + ChatColor.RED + " zum Tisch mitbringen");
             }
         } else {
-            player.sendMessage(ChatColor.RED + "Bitte schreiben sie eine akzeptable Geldmenge, Der Mindesteinsatz lautet: " + ChatColor.GOLD + betHandler.minMoney + " Tokens");
+            player.sendMessage(POKER_PREFIX + ChatColor.RED + "Bitte schreiben sie eine akzeptable Geldmenge, Der Mindesteinsatz lautet: " + ChatColor.GOLD + betHandler.minMoney + " Tokens");
         }
 
         if (playerList.size() >= minPlayers && gameState == GameState.WAITFORPLAYERS) {
@@ -622,27 +624,27 @@ public class Poker implements Game {
                     break;
                 case 2:
                     if (!playerRaise(playerProperties, betHandler.betAmounts[0]))
-                        player.sendMessage(ChatColor.RED + "Sie haben nicht genügent Geld");
+                        player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben nicht genügent Geld");
                     break;
                 case 3:
                     if (!playerRaise(playerProperties, betHandler.betAmounts[1]))
-                        player.sendMessage(ChatColor.RED + "Sie haben nicht genügent Geld");
+                        player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben nicht genügent Geld");
                     break;
                 case 4:
                     if (!playerRaise(playerProperties, betHandler.betAmounts[2]))
-                        player.sendMessage(ChatColor.RED + "Sie haben nicht genügent Geld");
+                        player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben nicht genügent Geld");
                     break;
                 case 5:
                     if (!playerRaise(playerProperties, betHandler.betAmounts[3]))
-                        player.sendMessage(ChatColor.RED + "Sie haben nicht genügent Geld");
+                        player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben nicht genügent Geld");
                     break;
                 case 6:
                     if (!playerRaise(playerProperties, betHandler.betAmounts[4]))
-                        player.sendMessage(ChatColor.RED + "Sie haben nicht genügent Geld");
+                        player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben nicht genügent Geld");
                     break;
                 case 8:
                     if (!playerRaise(playerProperties, playerProperties.bet.getMoney()))
-                        player.sendMessage(ChatColor.RED + "Sie haben nicht genügent Geld");
+                        player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben nicht genügent Geld");
                     else nextPlayer();
                     break;
             }
@@ -671,7 +673,7 @@ public class Poker implements Game {
         playerList.values().forEach(p -> System.out.println(p.Player.getDisplayName()));
         System.out.println("----"); */
 
-        playerList.values().forEach(p -> p.Player.sendMessage(ChatColor.GREEN + "Die Runde startet nun"));
+        playerList.values().forEach(p -> p.Player.sendMessage(POKER_PREFIX + ChatColor.GREEN + "Die Runde startet nun"));
 
         playerOnTurn = 0;
         betHandler.pot = 0;
@@ -746,7 +748,7 @@ public class Poker implements Game {
         Economy econ = ApatesCasino.getEconomy();
 
         if (econ.getBalance(player) < betHandler.minMoney) {
-            player.sendMessage(ChatColor.RED + "Sie haben nicht genügend Geld üm diesem Spiel beizutreten!");
+            player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben nicht genügend Geld üm diesem Spiel beizutreten!");
             return;
         }
 
@@ -755,7 +757,7 @@ public class Poker implements Game {
         lobby.addPlayer(player);
         lobby.changePlayerState(playerID, PlayerState.UNREADY);
 
-        player.sendMessage(ChatColor.AQUA + "Bitte schreiben sie ihren Geldbetrag den sie zum Tisch bringen wollen");
+        player.sendMessage(POKER_PREFIX + ChatColor.AQUA + "Bitte schreiben sie ihren Geldbetrag den sie zum Tisch bringen wollen");
         messageWaitingPlayers.add(playerID);
         writeMessageTimer(playerID);
     }
@@ -769,7 +771,7 @@ public class Poker implements Game {
             if (playerProperties.Player != null) {
                 ApatesCasino.getEconomy().depositPlayer(playerProperties.Player, playerProperties.bet.getMoney());
                 clearHotBar(playerProperties);
-                playerProperties.Player.sendMessage(ChatColor.RED + "Sie haben das Spiel verlassen");
+                playerProperties.Player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben das Spiel verlassen");
             }
 
             playerList.remove(playerProperties.playerNumber);

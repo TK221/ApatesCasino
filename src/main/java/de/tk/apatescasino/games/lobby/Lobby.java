@@ -53,7 +53,7 @@ public class Lobby {
     }
 
     public void changePlayerState(UUID playerID, PlayerState state) {
-        getPlayerFromList(playerID).setPlayerState(state);
+        if (getPlayerFromList(playerID) != null) getPlayerFromList(playerID).setPlayerState(state);
     }
 
     public int getMaxPlayers() {
