@@ -7,9 +7,9 @@ import java.util.UUID;
 
 public interface Game {
 
-    void StartGame();
+    void startGame();
 
-    void CancelGame();
+    void cancelGame();
 
     GameType getGameType();
 
@@ -19,9 +19,9 @@ public interface Game {
 
     Integer getMinPlayers();
 
-    void AddPlayer(Player player);
+    void addPlayer(Player player);
 
-    void RemovePlayer(UUID playerID);
+    void removePlayer(UUID playerID);
 
     boolean containsPlayer(UUID playerID);
 }

@@ -66,11 +66,11 @@ public class BlackJack implements Game {
     private final List<Card> croupierCards;
     private Integer croupierCardsValue;
 
-    Hologram hologram;
-    TextLine croupierLine;
-    TextLine croupierCardsLine;
-    TextLine playerLine;
-    TextLine playerCardsLine;
+    private final Hologram hologram;
+    private final TextLine croupierLine;
+    private final TextLine croupierCardsLine;
+    private final TextLine playerLine;
+    private final TextLine playerCardsLine;
 
     public BlackJack(String id, int minPlayers, int maxPlayers, Location joinBlockPosition, int minBet, int maxBet, int preparingTime, int turnTime) {
         this.minPlayers = minPlayers;
@@ -93,7 +93,7 @@ public class BlackJack implements Game {
         Location location = new Location(joinBlockPosition.getWorld(), joinBlockPosition.getBlockX() + 0.5, joinBlockPosition.getBlockY() + 2.5, joinBlockPosition.getBlockZ() + 0.5);
         hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), location);
 
-        hologram.insertTextLine(0, ChatColor.BLUE + "BlackJack: " + lobby.ID);
+        hologram.insertTextLine(0, ChatColor.BLUE + "BlackJack: " + lobby.id);
         croupierLine = hologram.insertTextLine(1, ChatColor.DARK_PURPLE + "Croupier:");
         croupierCardsLine = hologram.insertTextLine(2, "");
         playerLine = hologram.insertTextLine(3, ChatColor.WHITE + "---");
@@ -122,15 +122,15 @@ public class BlackJack implements Game {
             public void run() {
                 if (timer == preparingTime) {
                     for (BlackJackPlayer player : playerMap.values()) {
-                        lobby.ChangePlayerState(player.Player.getUniqueId(), PlayerState.UNREADY);
+                        lobby.changePlayerState(player.Player.getUniqueId(), PlayerState.UNREADY);
                     }
                 }
 
                 if (timer <= 0) {
                     // Inform all player which didn't bet and remove them from the game
-                    for (BlackJackPlayer player : playerMap.values().stream().filter(p -> p.GetStake() == 0).collect(Collectors.toList())) {
+                    for (BlackJackPlayer player : playerMap.values().stream().filter(p -> p.getStake() == 0).collect(Collectors.toList())) {
                         player.Player.sendMessage(ChatColor.RED + "Sie haben leider keinen Einsatz platziert");
-                        RemovePlayer(player.Player.getUniqueId());
+                        removePlayer(player.Player.getUniqueId());
                     }
 
                     // Start game if enough players are in the lobby, else wait for them
@@ -170,11 +170,11 @@ public class BlackJack implements Game {
 
         // Set player states and write starting message
         for (BlackJackPlayer player : playerMap.values()) {
-            player.ResetCards();
+            player.resetCards();
             clearHotBar(player);
 
             player.state = BlackJackPlayerState.IN_GAME;
-            lobby.ChangePlayerState(player.Player.getUniqueId(), PlayerState.INGAME);
+            lobby.changePlayerState(player.Player.getUniqueId(), PlayerState.INGAME);
             player.Player.sendMessage(ChatColor.GREEN + "Das Spiel hat nun begonnen");
         }
 
@@ -183,10 +183,10 @@ public class BlackJack implements Game {
         cardDeck.ShuffleDeck();
 
         // Draw Cards
-        for (BlackJackPlayer player : playerMap.values()) player.AddCard(cardDeck.pickFirst());
+        for (BlackJackPlayer player : playerMap.values()) player.addCard(cardDeck.pickFirst());
         croupierCards.add(cardDeck.pickFirst());
         croupierCardsValue = BlackJackPlayer.getCalculatedCardsValue(croupierCards);
-        for (BlackJackPlayer player : playerMap.values()) player.AddCard(cardDeck.pickFirst());
+        for (BlackJackPlayer player : playerMap.values()) player.addCard(cardDeck.pickFirst());
 
         currentPlayer = 0;
         nextPlayer();
@@ -241,37 +241,37 @@ public class BlackJack implements Game {
 
         for (BlackJackPlayer player : getActivePlayers()) {
 
-            if (player.GetCardsValue() > croupierCardsValue || croupierCardsValue > 21) {
-                economy.depositPlayer(player.Player, player.GetStake());
-                bank.transferToPlayer(player.Player, player.GetStake());
+            if (player.getCardsValue() > croupierCardsValue || croupierCardsValue > 21) {
+                economy.depositPlayer(player.Player, player.getStake());
+                bank.transferToPlayer(player.Player, player.getStake());
 
                 player.Player.sendMessage(ChatColor.GREEN + "Sie haben den Croupier überboten und "
-                        + ChatColor.GOLD + player.GetStake() * 2 + " Adonen" + ChatColor.GREEN + " gewonen");
+                        + ChatColor.GOLD + player.getStake() * 2 + " Adonen" + ChatColor.GREEN + " gewonen");
 
-            } else if (player.GetCardsValue().equals(croupierCardsValue)) {
-                economy.depositPlayer(player.Player, player.GetStake());
+            } else if (player.getCardsValue().equals(croupierCardsValue)) {
+                economy.depositPlayer(player.Player, player.getStake());
                 player.Player.sendMessage(ChatColor.YELLOW + "Sie sind mit dem Croupier gleich und bekommen ihre "
-                        + ChatColor.GOLD + player.GetStake() + " Adonen" + ChatColor.YELLOW + " zurück");
+                        + ChatColor.GOLD + player.getStake() + " Adonen" + ChatColor.YELLOW + " zurück");
 
             } else {
-                bank.deposit(player.GetStake());
-                player.ResetStake();
+                bank.deposit(player.getStake());
+                player.resetStake();
                 player.state = BlackJackPlayerState.PREPARING;
 
                 player.Player.sendMessage(ChatColor.RED + "Der Croupier verfügt über bessere Karten, sie haben ihren Einsatz somit verloren");
             }
 
-            player.ResetStake();
+            player.resetStake();
         }
 
         if (playerMap.values().size() >= minPlayers) {
             for (BlackJackPlayer player : playerMap.values()) {
                 UUID playerID = player.Player.getUniqueId();
 
-                player.ResetStake();
+                player.resetStake();
                 player.Player.sendMessage(ChatColor.GREEN + "Die runde ist beendet und startet erneut");
 
-                lobby.ChangePlayerState(playerID, PlayerState.UNREADY);
+                lobby.changePlayerState(playerID, PlayerState.UNREADY);
 
                 waitForPlayerBetMessage(player.Player);
                 setWaitingBar(player);
@@ -299,7 +299,7 @@ public class BlackJack implements Game {
         if (player.state.equals(BlackJackPlayerState.PREPARING) || player.state.equals(BlackJackPlayerState.IN_GAME)) {
             switch (slot) {
                 case 8:
-                    RemovePlayer(playerID);
+                    removePlayer(playerID);
                     break;
             }
         } else if (player.state.equals(BlackJackPlayerState.BETTING)) {
@@ -314,13 +314,13 @@ public class BlackJack implements Game {
     }
 
     private void playerHit(BlackJackPlayer player) {
-        player.AddCard(cardDeck.pickFirst());
+        player.addCard(cardDeck.pickFirst());
 
-        if (player.GetCardsValue() > 21) {
+        if (player.getCardsValue() > 21) {
             clearHotBar(player);
 
-            bank.deposit(player.GetStake());
-            player.ResetStake();
+            bank.deposit(player.getStake());
+            player.resetStake();
             player.state = BlackJackPlayerState.PREPARING;
 
             setWaitingBar(player);
@@ -361,9 +361,9 @@ public class BlackJack implements Game {
     }
 
     private void setPlayerInformationBar(BlackJackPlayer player) {
-        if (player == null || player.GetCards().size() <= 0) return;
+        if (player == null || player.getCards().size() <= 0) return;
 
-        String message = Card.GetCardsAsText(player.GetCards()) + " - Kartenwert: " + player.GetCardsValue();
+        String message = Card.getCardsAsText(player.getCards()) + " - Kartenwert: " + player.getCardsValue();
         player.Player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
     }
 
@@ -391,14 +391,14 @@ public class BlackJack implements Game {
     private void updateHologram() {
         if (!gameState.equals(BlackJackGameState.WAITING)) {
             croupierLine.setText(ChatColor.RED + "Croupier: ");
-            croupierCardsLine.setText(Card.GetCardsAsText(croupierCards) + ChatColor.WHITE + " - Kartenwet: " + croupierCardsValue);
+            croupierCardsLine.setText(Card.getCardsAsText(croupierCards) + ChatColor.WHITE + " - Kartenwet: " + croupierCardsValue);
 
 
             BlackJackPlayer player = getPlayerByNumber(currentPlayer);
             if (player != null) {
                 playerLine.setText(ChatColor.WHITE + "Spieler:");
-                playerLine.setText(ChatColor.WHITE + "Spieler: " + ChatColor.AQUA + player.Player.getDisplayName() + ChatColor.WHITE + " Einsatz - " + ChatColor.GOLD + player.GetStake());
-                playerCardsLine.setText(Card.GetCardsAsText(player.GetCards()) + ChatColor.WHITE + " - Kartenwet: " + player.GetCardsValue());
+                playerLine.setText(ChatColor.WHITE + "Spieler: " + ChatColor.AQUA + player.Player.getDisplayName() + ChatColor.WHITE + " Einsatz - " + ChatColor.GOLD + player.getStake());
+                playerCardsLine.setText(Card.getCardsAsText(player.getCards()) + ChatColor.WHITE + " - Kartenwet: " + player.getCardsValue());
             } else {
                 playerLine.setText(ChatColor.WHITE + "---");
                 playerCardsLine.setText("");
@@ -420,8 +420,8 @@ public class BlackJack implements Game {
                 " | MAX: " + ChatColor.GOLD + maxBet + ChatColor.AQUA + ")");
 
 
-        ApatesCasino.GetChatMessageHandler().AddExpectedMessage(player, message -> {
-            if (gameState == BlackJackGameState.PREPARING && blackJackPlayer.GetStake() == 0 && message != null && message.matches("[0-9]+")) {
+        ApatesCasino.getChatMessageHandler().addExpectedMessage(player, message -> {
+            if (gameState == BlackJackGameState.PREPARING && blackJackPlayer.getStake() == 0 && message != null && message.matches("[0-9]+")) {
 
                 // Check for acceptable amount of money
                 int amount = Integer.parseInt(message);
@@ -432,12 +432,12 @@ public class BlackJack implements Game {
                         waitForPlayerBetMessage(player);
                     } else {
                         economy.withdrawPlayer(blackJackPlayer.Player, amount);
-                        blackJackPlayer.AddMoneyToStake(amount);
+                        blackJackPlayer.addMoneyToStake(amount);
 
-                        blackJackPlayer.Player.sendMessage(ChatColor.GREEN + "Sie sind nun mit einem Einsatz von " + ChatColor.GOLD + blackJackPlayer.GetStake() + " Tokens" +
+                        blackJackPlayer.Player.sendMessage(ChatColor.GREEN + "Sie sind nun mit einem Einsatz von " + ChatColor.GOLD + blackJackPlayer.getStake() + " Tokens" +
                                 ChatColor.GREEN + " in der Runde");
 
-                        lobby.ChangePlayerState(player.getUniqueId(), PlayerState.READY);
+                        lobby.changePlayerState(player.getUniqueId(), PlayerState.READY);
                     }
                 } else {
                     player.sendMessage(ChatColor.RED + "Geben sie bitte einen passenden Betrag ein (MIN: " + ChatColor.GOLD + minBet + ChatColor.AQUA +
@@ -455,14 +455,14 @@ public class BlackJack implements Game {
     }
 
     @Override
-    public void StartGame() {
+    public void startGame() {
 
     }
 
     @Override
-    public void CancelGame() {
+    public void cancelGame() {
         for (BlackJackPlayer player : playerMap.values()) {
-            RemovePlayer(player.Player.getUniqueId());
+            removePlayer(player.Player.getUniqueId());
         }
 
         hologram.delete();
@@ -490,7 +490,7 @@ public class BlackJack implements Game {
     }
 
     @Override
-    public void AddPlayer(Player player) {
+    public void addPlayer(Player player) {
         UUID playerID = player.getUniqueId();
 
         // Reject player to specific conditions
@@ -524,8 +524,8 @@ public class BlackJack implements Game {
         }
 
         // Add player to lobby
-        lobby.AddPlayer(player);
-        lobby.ChangePlayerState(playerID, PlayerState.UNREADY);
+        lobby.addPlayer(player);
+        lobby.changePlayerState(playerID, PlayerState.UNREADY);
 
         PlayerInventorySaver.addPlayerInventory(player);
 
@@ -553,16 +553,16 @@ public class BlackJack implements Game {
     }
 
     @Override
-    public void RemovePlayer(UUID playerID) {
+    public void removePlayer(UUID playerID) {
         BlackJackPlayer player = playerMap.get(playerID);
         if (player != null) {
             if (player.state != BlackJackPlayerState.PREPARING) {
-                bank.deposit(player.GetStake());
+                bank.deposit(player.getStake());
                 if (player.state.equals(BlackJackPlayerState.BETTING)) nextPlayer();
             } else {
-                economy.depositPlayer(player.Player, player.GetStake());
+                economy.depositPlayer(player.Player, player.getStake());
             }
-            player.ResetStake();
+            player.resetStake();
 
             player.Player.sendMessage(ChatColor.RED + "Sie haben das Spiel verlassen!");
             clearHotBar(player);
@@ -571,7 +571,7 @@ public class BlackJack implements Game {
         }
 
         playerMap.remove(playerID);
-        lobby.RemovePlayer(playerID);
+        lobby.removePlayer(playerID);
     }
 
     @Override

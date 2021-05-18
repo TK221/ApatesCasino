@@ -1,19 +1,25 @@
 package de.tk.apatescasino.games.utilities;
 
-public class PlayerBet {
+public class playerBet {
     private Integer money;
     private Integer stake;
 
-    public PlayerBet(int money, int stake) {
+    public playerBet(int money, int stake) {
         this.money = money;
         this.stake = stake;
     }
 
-    public Integer GetMoney() { return money; }
+    public Integer getMoney() {
+        return money;
+    }
 
-    public void SetMoney(int amount) { money = amount; }
+    public void setMoney(int amount) {
+        money = amount;
+    }
 
-    public void AddMoney(int amount) { money += amount; }
+    public void addMoney(int amount) {
+        money += amount;
+    }
 
     private boolean removeMoney(int amount) {
         if (money >= amount) {
@@ -23,11 +29,17 @@ public class PlayerBet {
     }
 
 
-    public Integer GetStake() { return stake; }
+    public Integer getStake() {
+        return stake;
+    }
 
-    public void ResetStake() { stake = 0; }
+    public void resetStake() {
+        stake = 0;
+    }
 
-    private void addMoneyToStake(int amount) { stake += amount; }
+    private void addMoneyToStake(int amount) {
+        stake += amount;
+    }
 
     private boolean removeFromStake(int amount) {
         if (stake >= amount) {
@@ -37,15 +49,16 @@ public class PlayerBet {
     }
 
 
-    public boolean TransferMoneyToStake(int amount) {
+    public boolean transferMoneyToStake(int amount) {
         if (removeMoney(amount)) {
             addMoneyToStake(amount);
             return true;
-        } else return  false;
+        } else return false;
     }
-    public boolean TransferStakeToMoney(int amount) {
+
+    public boolean transferStakeToMoney(int amount) {
         if (removeFromStake(amount)) {
-            AddMoney(amount);
+            addMoney(amount);
             return true;
         } else return false;
     }

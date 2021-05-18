@@ -16,14 +16,14 @@ public class LobbyManager {
         activeGames = new HashMap<>();
     }
 
-    public Game GetGameByPlayer(UUID playerID) {
+    public Game getGameByPlayer(UUID playerID) {
         for (Game game : activeGames.values()) {
             if (game.containsPlayer(playerID)) return game;
         }
         return null;
     }
 
-    public Game GetGameByJoinBlock(Location joinBlockPosition) {
+    public Game getGameByJoinBlock(Location joinBlockPosition) {
         for (Game game : activeGames.values()) {
 
             if (game.getJoinBlockPosition().equals(joinBlockPosition)) return game;
@@ -31,25 +31,25 @@ public class LobbyManager {
         return null;
     }
 
-    public boolean GameExist(String gameID) {
+    public boolean gameExist(String gameID) {
         return activeGames.containsKey(gameID);
     }
 
-    public Game GetGame(String gameID) {
+    public Game getGame(String gameID) {
         return activeGames.get(gameID);
     }
 
-    public Collection<Game> GetAllGames() {
+    public Collection<Game> getAllGames() {
         return activeGames.values();
     }
 
-    public void AddGame(Game game, String gameID) {
+    public void addGame(Game game, String gameID) {
         if (!activeGames.containsKey(gameID)) activeGames.put(gameID, game);
     }
 
-    public void RemoveGame(String gameID) {
+    public void removeGame(String gameID) {
         Game game = activeGames.get(gameID);
-        game.CancelGame();
+        game.cancelGame();
 
         activeGames.remove(gameID);
     }

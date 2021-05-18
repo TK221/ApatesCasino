@@ -41,7 +41,7 @@ public class PokerConfigWriter implements GameConfigWriter {
     }
 
     @Override
-    public void AddPositions(Location location) {
+    public void addPositions(Location location) {
         switch (currInputType) {
             case MAINSCREEN:
                 config.MainScreenLocation = new LocationCoordinates(location);
@@ -55,49 +55,49 @@ public class PokerConfigWriter implements GameConfigWriter {
     }
 
     @Override
-    public void AddMessage(String message) {
+    public void addMessage(String message) {
         switch (currInputType) {
 
             case SMALLLBLIND:
                 Integer smallBlind = GameConfigManager.convertStringToInteger(message);
                 if (smallBlind != null && smallBlind > 0) {
-                    config.SmallBlind = smallBlind;
+                    config.smallBlind = smallBlind;
                     break;
                 }
             case BIGBLIND:
                 Integer bigBlind = GameConfigManager.convertStringToInteger(message);
-                if (bigBlind != null && bigBlind >= config.SmallBlind) {
-                    config.BigBlind = bigBlind;
+                if (bigBlind != null && bigBlind >= config.smallBlind) {
+                    config.bigBlind = bigBlind;
                     break;
                 }
             case MINMONEY:
                 Integer minMoney = GameConfigManager.convertStringToInteger(message);
                 if (minMoney != null && minMoney > 0) {
-                    config.MinMoney = minMoney;
+                    config.minMoney = minMoney;
                     break;
                 }
             case MAXMONEY:
                 Integer maxMoney = GameConfigManager.convertStringToInteger(message);
-                if (maxMoney != null && maxMoney >= config.MinMoney) {
-                    config.MaxMoney = maxMoney;
+                if (maxMoney != null && maxMoney >= config.minMoney) {
+                    config.maxMoney = maxMoney;
                     break;
                 }
             case FEE:
                 Double fee = GameConfigManager.convertStringToDouble(message);
                 if (fee != null && fee >= 0 && fee < 1) {
-                    config.Fee = fee;
+                    config.fee = fee;
                     break;
                 }
             case PREPARINGTIME:
                 Integer preparingTime = GameConfigManager.convertStringToInteger(message);
                 if (preparingTime != null && preparingTime > 0) {
-                    config.PreparingTime = preparingTime;
+                    config.preparingTime = preparingTime;
                     break;
                 }
             case TURNTIME:
                 Integer turnTime = GameConfigManager.convertStringToInteger(message);
                 if (turnTime != null && turnTime > 0) {
-                    config.TurnTime = turnTime;
+                    config.turnTime = turnTime;
                     break;
                 }
                 break;
@@ -113,9 +113,9 @@ public class PokerConfigWriter implements GameConfigWriter {
                 sendInformationMessage();
 
             } else {
-                Game game = new Poker(config.GameID, config.JoinBlockPosition.GetLocation(), config.SmallBlind, config.BigBlind,
-                        config.MinMoney, config.MinPlayers, config.MaxPlayers, config.TurnTime, config.PreparingTime);
-                gameConfigManager.CreateNewGame(config, game, playerID);
+                Game game = new Poker(config.gameID, config.joinBlockPosition.getLocation(), config.smallBlind, config.bigBlind,
+                        config.minMoney, config.minPlayers, config.maxPlayers, config.turnTime, config.preparingTime);
+                gameConfigManager.createNewGame(config, game, playerID);
             }
         }
     }

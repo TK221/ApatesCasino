@@ -94,10 +94,10 @@ public class BankAccountHandler {
 
         List<Transaction> transactions = loadTransactions();
         for (Transaction transaction : transactions) {
-            String color = transaction.Profit ? ChatColor.GREEN.toString() : ChatColor.GREEN.toString();
+            String color = transaction.profit ? ChatColor.GREEN.toString() : ChatColor.GREEN.toString();
 
-            String message = color + "[" + ChatColor.GOLD + transaction.Amount + color + "] ";
-            message += transaction.PlayerName + (transaction.Profit ? " -> " : " <- ") + " Casino ( " + transaction.Bank + " ) - " + transaction.DateTime;
+            String message = color + "[" + ChatColor.GOLD + transaction.amount + color + "] ";
+            message += transaction.playerName + (transaction.profit ? " -> " : " <- ") + " Casino ( " + transaction.bank + " ) - " + transaction.dateTime;
 
             player.sendMessage(message);
         }

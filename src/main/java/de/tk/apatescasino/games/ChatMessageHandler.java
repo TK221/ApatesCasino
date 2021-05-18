@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 public class ChatMessageHandler {
     private final WeakHashMap<Player, Consumer<String>> expectedMessages = new WeakHashMap<>();
 
-    public boolean HandleChat(Player player, String message) {
+    public boolean handleChat(Player player, String message) {
         Consumer<String> consumer = expectedMessages.remove(player);
         if (consumer != null) {
             new BukkitRunnable() {
@@ -24,7 +24,7 @@ public class ChatMessageHandler {
         return false;
     }
 
-    public void AddExpectedMessage(Player player, Consumer<String> consumer) {
+    public void addExpectedMessage(Player player, Consumer<String> consumer) {
         expectedMessages.put(player, consumer);
     }
 }

@@ -40,7 +40,7 @@ public class BlackJackConfigWriter implements GameConfigWriter {
     }
 
     @Override
-    public void AddPositions(Location location) {
+    public void addPositions(Location location) {
         switch (currInputType) {
             case MAINSCREEN:
                 config.MainScreenLocation = new LocationCoordinates(location);
@@ -54,30 +54,30 @@ public class BlackJackConfigWriter implements GameConfigWriter {
     }
 
     @Override
-    public void AddMessage(String message) {
+    public void addMessage(String message) {
         switch (currInputType) {
             case MINBET:
                 Integer minBet = GameConfigManager.convertStringToInteger(message);
                 if (minBet != null && minBet >= 0) {
-                    config.MinBet = minBet;
+                    config.minBet = minBet;
                     break;
                 }
             case MAXBET:
                 Integer maxBet = GameConfigManager.convertStringToInteger(message);
-                if (maxBet != null && maxBet >= config.MinBet) {
-                    config.MaxBet = maxBet;
+                if (maxBet != null && maxBet >= config.minBet) {
+                    config.maxBet = maxBet;
                     break;
                 }
             case PREPARINGTIME:
                 Integer preparingTime = GameConfigManager.convertStringToInteger(message);
                 if (preparingTime != null && preparingTime >= 0) {
-                    config.PreparingTime = preparingTime;
+                    config.preparingTime = preparingTime;
                     break;
                 }
             case TURNTIME:
                 Integer turnTime = GameConfigManager.convertStringToInteger(message);
                 if (turnTime != null && turnTime >= 0) {
-                    config.TurnTime = turnTime;
+                    config.turnTime = turnTime;
                     break;
                 }
 
@@ -96,9 +96,9 @@ public class BlackJackConfigWriter implements GameConfigWriter {
                 sendInformationMessage();
 
             } else {
-                Game game = new BlackJack(config.GameID, config.MinPlayers, config.MaxPlayers, config.JoinBlockPosition.GetLocation(),
-                        config.MinBet, config.MaxBet, config.PreparingTime, config.TurnTime);
-                gameConfigManager.CreateNewGame(config, game, playerID);
+                Game game = new BlackJack(config.gameID, config.minPlayers, config.maxPlayers, config.joinBlockPosition.getLocation(),
+                        config.minBet, config.maxBet, config.preparingTime, config.turnTime);
+                gameConfigManager.createNewGame(config, game, playerID);
             }
         }
     }

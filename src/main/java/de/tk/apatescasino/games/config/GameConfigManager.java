@@ -23,42 +23,42 @@ public class GameConfigManager {
         gameConfigProvider = new GameConfigProvider(lobbyManager);
     }
 
-    public void CreateAllGames() {
-        gameConfigProvider.CreateGames();
+    public void createAllGames() {
+        gameConfigProvider.createGames();
     }
 
-    public void CreateNewGame(GameConfig gameConfig, Game game, UUID playerID) {
-        lobbyManager.AddGame(game, gameConfig.GameID);
-        gameConfigProvider.AddNewConfig(gameConfig);
+    public void createNewGame(GameConfig gameConfig, Game game, UUID playerID) {
+        lobbyManager.addGame(game, gameConfig.gameID);
+        gameConfigProvider.addNewConfig(gameConfig);
 
         configWriterMap.remove(playerID);
     }
 
-    public void RemoveGame(String gameID, GameType gameType) {
-        lobbyManager.RemoveGame(gameID);
-        gameConfigProvider.RemoveConfig(gameID, gameType);
+    public void removeGame(String gameID, GameType gameType) {
+        lobbyManager.removeGame(gameID);
+        gameConfigProvider.removeConfig(gameID, gameType);
     }
 
-    public void PlayerSendMessage(UUID playerID, String message) {
-        if (configWriterMap.containsKey(playerID)) configWriterMap.get(playerID).AddMessage(message);
+    public void playerSendMessage(UUID playerID, String message) {
+        if (configWriterMap.containsKey(playerID)) configWriterMap.get(playerID).addMessage(message);
     }
 
-    public void PlayerSendLocation(UUID playerID, Location location) {
-        if (configWriterMap.containsKey(playerID)) configWriterMap.get(playerID).AddPositions(location);
+    public void playerSendLocation(UUID playerID, Location location) {
+        if (configWriterMap.containsKey(playerID)) configWriterMap.get(playerID).addPositions(location);
     }
 
-    public boolean PlayerHasConfigWriter(UUID playerID) {
+    public boolean playerHasConfigWriter(UUID playerID) {
         return configWriterMap.containsKey(playerID);
     }
 
-    public boolean AddConfigWriter(UUID playerID, GameConfigWriter configWriter) {
+    public boolean addConfigWriter(UUID playerID, GameConfigWriter configWriter) {
         if (configWriterMap.containsKey(playerID)) return false;
 
         configWriterMap.put(playerID, configWriter);
         return true;
     }
 
-    public void RemoveConfigWriter(UUID playerID) {
+    public void removeConfigWriter(UUID playerID) {
         configWriterMap.remove(playerID);
     }
 

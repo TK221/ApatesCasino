@@ -26,7 +26,7 @@ public class BlackJackListener implements Listener {
         int slot = player.getInventory().getHeldItemSlot();
 
         if (event.getHand() == EquipmentSlot.HAND && player.getInventory().getItem(slot) != null) {
-            Game playerGame = lobbyManager.GetGameByPlayer(playerID);
+            Game playerGame = lobbyManager.getGameByPlayer(playerID);
 
             if (playerGame instanceof BlackJack) {
                 ((BlackJack) playerGame).PlayerAction(playerID, slot);
@@ -38,7 +38,7 @@ public class BlackJackListener implements Listener {
     public void onPlayerPlaceBlock(BlockPlaceEvent event) {
         UUID playerID = event.getPlayer().getUniqueId();
 
-        Game game = lobbyManager.GetGameByPlayer(playerID);
+        Game game = lobbyManager.getGameByPlayer(playerID);
 
         if (game instanceof BlackJack) {
             event.setCancelled(true);

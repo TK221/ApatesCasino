@@ -23,10 +23,10 @@ enum PokerHand {
 }
 
 class PlayerPokerHand {
-    public Card FirstCard;
-    public Card SecondCard;
-    public PokerHand Hand;
-    public Integer HandScore;
+    public Card firstCard;
+    public Card secondCard;
+    public PokerHand hand;
+    public Integer handScore;
 }
 
 public class PokerCardHandler {
@@ -37,7 +37,7 @@ public class PokerCardHandler {
     public List<Card> showedCards;
 
 
-    public void InitGameCardHandler() {
+    public void initGameCardHandler() {
         // Initialize card deck and shuffle it
         deck = new CardDeck();
         deck.InitStandardDeck();
@@ -47,9 +47,9 @@ public class PokerCardHandler {
         showedCards = new ArrayList<>();
     }
 
-    public void InitPlayerPokerCards(PlayerPokerHand hand) {
-        hand.FirstCard = deck.pickFirst();
-        hand.SecondCard = deck.pickFirst();
+    public void initPlayerPokerCards(PlayerPokerHand hand) {
+        hand.firstCard = deck.pickFirst();
+        hand.secondCard = deck.pickFirst();
     }
 
     public List<List<PokerPlayerProperties>> getWinners(List<PokerPlayerProperties> players) {
@@ -59,7 +59,7 @@ public class PokerCardHandler {
 
         for (PokerPlayerProperties player : players) calculatePlayerHand(player.hand);
 
-        players.sort(Comparator.comparing(p -> p.hand.Hand.ordinal()));
+        players.sort(Comparator.comparing(p -> p.hand.hand.ordinal()));
         Collections.reverse(players);
 
         List<PokerHand> pokerHands = Arrays.asList(PokerHand.values());
@@ -68,16 +68,16 @@ public class PokerCardHandler {
             List<PokerPlayerProperties> handPlayerList = new ArrayList<>();
 
             for (PokerPlayerProperties playerProperties : players)
-                if (playerProperties.hand.Hand.equals(pokerHand)) handPlayerList.add(playerProperties);
+                if (playerProperties.hand.hand.equals(pokerHand)) handPlayerList.add(playerProperties);
 
-            List<List<PokerPlayerProperties>> groupedScorePlayerList = new ArrayList<>(handPlayerList.stream().collect(Collectors.groupingBy(p -> p.hand.HandScore)).values());
+            List<List<PokerPlayerProperties>> groupedScorePlayerList = new ArrayList<>(handPlayerList.stream().collect(Collectors.groupingBy(p -> p.hand.handScore)).values());
             for (List<PokerPlayerProperties> scorePlayerPropertiesList : groupedScorePlayerList) {
 
                 List<CardRank> cardRanks = Arrays.asList(CardRank.values());
                 Collections.reverse(cardRanks);
                 for (CardRank cardRank : cardRanks) {
 
-                    List<PokerPlayerProperties> cardPlayerProperties = scorePlayerPropertiesList.stream().filter(p -> p.hand.FirstCard.Rank.equals(cardRank) || p.hand.SecondCard.Rank.equals(cardRank)).collect(Collectors.toList());
+                    List<PokerPlayerProperties> cardPlayerProperties = scorePlayerPropertiesList.stream().filter(p -> p.hand.firstCard.rank.equals(cardRank) || p.hand.secondCard.rank.equals(cardRank)).collect(Collectors.toList());
 
                     for (int i = 0; i < cardPlayerProperties.size(); i++) {
                         PokerPlayerProperties playerProperties = cardPlayerProperties.get(i);
@@ -102,9 +102,9 @@ public class PokerCardHandler {
         if (playerHand == null) return;
 
         List<Card> allCards = new ArrayList<>(showedCards);
-        allCards.add(playerHand.FirstCard);
-        allCards.add(playerHand.SecondCard);
-        allCards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
+        allCards.add(playerHand.firstCard);
+        allCards.add(playerHand.secondCard);
+        allCards.sort(Comparator.comparing(c -> c.rank.ordinal()));
 
         List<List<Card>> sameTypeCards = getSameTypeCards(allCards);
         List<List<Card>> sameRankCards = getSameRankCards(allCards);
@@ -114,20 +114,20 @@ public class PokerCardHandler {
         // Royal FLush
         if (sameTypeCards.stream().anyMatch(l -> l.size() >= 5)) {
             List<Card> cards = sameTypeCards.stream().filter(l -> l.size() >= 5).findFirst().orElse(new ArrayList<>());
-            cards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
+            cards.sort(Comparator.comparing(c -> c.rank.ordinal()));
 
             finalCards = new ArrayList<>();
             int index = CardRank.TEN.ordinal();
 
             for (Card card : cards) {
-                if (card.Rank.ordinal() == index) {
+                if (card.rank.ordinal() == index) {
                     index++;
                     finalCards.add(card);
                 }
             }
             if (index > CardRank.ACE.ordinal()) {
-                playerHand.HandScore = getHandValue(finalCards, PokerHand.ROYAL_FLUSH);
-                playerHand.Hand = PokerHand.ROYAL_FLUSH;
+                playerHand.handScore = getHandValue(finalCards, PokerHand.ROYAL_FLUSH);
+                playerHand.hand = PokerHand.ROYAL_FLUSH;
                 return;
             }
         }
@@ -138,8 +138,8 @@ public class PokerCardHandler {
 
             finalCards = getHighestStraight(cards);
             if (finalCards != null) {
-                playerHand.HandScore = getHandValue(finalCards, PokerHand.STRAIGHT_FLUSH);
-                playerHand.Hand = PokerHand.STRAIGHT_FLUSH;
+                playerHand.handScore = getHandValue(finalCards, PokerHand.STRAIGHT_FLUSH);
+                playerHand.hand = PokerHand.STRAIGHT_FLUSH;
                 return;
             }
         }
@@ -148,8 +148,8 @@ public class PokerCardHandler {
         if (sameRankCards.stream().anyMatch(l -> l.size() == 4)) {
             List<Card> cards = sameRankCards.stream().filter(l -> l.size() == 4).findFirst().orElse(new ArrayList<>());
 
-            playerHand.HandScore = getHandValue(cards, PokerHand.FOUR_OF_A_KIND);
-            playerHand.Hand = PokerHand.FOUR_OF_A_KIND;
+            playerHand.handScore = getHandValue(cards, PokerHand.FOUR_OF_A_KIND);
+            playerHand.hand = PokerHand.FOUR_OF_A_KIND;
             return;
         }
 
@@ -158,28 +158,28 @@ public class PokerCardHandler {
             List<List<Card>> threeOfAKind = sameRankCards.stream().filter(l -> l.size() == 3).collect(Collectors.toList());
             List<List<Card>> pairs = sameRankCards.stream().filter(l -> l.size() == 2).collect(Collectors.toList());
 
-            threeOfAKind.sort(Comparator.comparing(l -> l.get(0).Rank.ordinal()));
-            pairs.sort(Comparator.comparing(l -> l.get(0).Rank.ordinal()));
+            threeOfAKind.sort(Comparator.comparing(l -> l.get(0).rank.ordinal()));
+            pairs.sort(Comparator.comparing(l -> l.get(0).rank.ordinal()));
 
             finalCards = threeOfAKind.get(0);
             finalCards.addAll(pairs.get(0));
 
-            playerHand.HandScore = getHandValue(finalCards, PokerHand.FULL_HOUSE);
-            playerHand.Hand = PokerHand.FULL_HOUSE;
+            playerHand.handScore = getHandValue(finalCards, PokerHand.FULL_HOUSE);
+            playerHand.hand = PokerHand.FULL_HOUSE;
             return;
         }
 
         // Flush
         if (sameTypeCards.stream().anyMatch(l -> l.size() >= 5)) {
             List<Card> cards = sameTypeCards.stream().filter(l -> l.size() >= 5).findFirst().orElse(new ArrayList<>());
-            cards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
+            cards.sort(Comparator.comparing(c -> c.rank.ordinal()));
 
             if (cards.size() > 5) {
                 cards.subList(0, (cards.size() - 5)).clear();
             }
 
-            playerHand.HandScore = getHandValue(cards, PokerHand.FLUSH);
-            playerHand.Hand = PokerHand.FLUSH;
+            playerHand.handScore = getHandValue(cards, PokerHand.FLUSH);
+            playerHand.hand = PokerHand.FLUSH;
             return;
         }
 
@@ -190,43 +190,43 @@ public class PokerCardHandler {
             finalCards = getHighestStraight(cards);
 
             if (finalCards != null) {
-                playerHand.HandScore = getHandValue(cards, PokerHand.STRAIGHT);
-                playerHand.Hand = PokerHand.STRAIGHT;
+                playerHand.handScore = getHandValue(cards, PokerHand.STRAIGHT);
+                playerHand.hand = PokerHand.STRAIGHT;
                 return;
             }
         }
 
         // Three of a kind
         if (sameRankCards.stream().anyMatch(l -> l.size() == 3)) {
-            List<List<Card>> threeOfAKind = sameRankCards.stream().filter(l -> l.size() == 3).sorted(Comparator.comparing(l -> l.get(0).Rank.ordinal())).collect(Collectors.toList());
+            List<List<Card>> threeOfAKind = sameRankCards.stream().filter(l -> l.size() == 3).sorted(Comparator.comparing(l -> l.get(0).rank.ordinal())).collect(Collectors.toList());
 
             finalCards = threeOfAKind.get(0);
 
-            playerHand.HandScore = getHandValue(finalCards, PokerHand.THREE_OF_A_KIND);
-            playerHand.Hand = PokerHand.THREE_OF_A_KIND;
+            playerHand.handScore = getHandValue(finalCards, PokerHand.THREE_OF_A_KIND);
+            playerHand.hand = PokerHand.THREE_OF_A_KIND;
             return;
         }
 
         // Two Pairs
         if (sameRankCards.stream().filter(l -> l.size() == 2).count() >= 2) {
-            List<List<Card>> pairs = sameRankCards.stream().filter(l -> l.size() == 2).sorted(Comparator.comparing(l -> l.get(0).Rank.ordinal())).collect(Collectors.toList());
+            List<List<Card>> pairs = sameRankCards.stream().filter(l -> l.size() == 2).sorted(Comparator.comparing(l -> l.get(0).rank.ordinal())).collect(Collectors.toList());
 
             finalCards = pairs.get(0);
             finalCards.addAll(pairs.get(1));
 
-            playerHand.HandScore = getHandValue(finalCards, PokerHand.TWO_PAIR);
-            playerHand.Hand = PokerHand.TWO_PAIR;
+            playerHand.handScore = getHandValue(finalCards, PokerHand.TWO_PAIR);
+            playerHand.hand = PokerHand.TWO_PAIR;
             return;
         }
 
         // Pair
         if (sameRankCards.stream().anyMatch(l -> l.size() == 2)) {
-            List<List<Card>> pairs = sameRankCards.stream().filter(l -> l.size() == 2).sorted(Comparator.comparing(l -> l.get(0).Rank.ordinal())).collect(Collectors.toList());
+            List<List<Card>> pairs = sameRankCards.stream().filter(l -> l.size() == 2).sorted(Comparator.comparing(l -> l.get(0).rank.ordinal())).collect(Collectors.toList());
 
             finalCards = pairs.get(0);
 
-            playerHand.HandScore = getHandValue(finalCards, PokerHand.PAIR);
-            playerHand.Hand = PokerHand.PAIR;
+            playerHand.handScore = getHandValue(finalCards, PokerHand.PAIR);
+            playerHand.hand = PokerHand.PAIR;
             return;
         }
 
@@ -234,15 +234,15 @@ public class PokerCardHandler {
         finalCards = new ArrayList<>();
         finalCards.add(allCards.get(0));
 
-        playerHand.HandScore = getHandValue(finalCards, PokerHand.HIGH_CARD);
-        playerHand.Hand = PokerHand.HIGH_CARD;
+        playerHand.handScore = getHandValue(finalCards, PokerHand.HIGH_CARD);
+        playerHand.hand = PokerHand.HIGH_CARD;
     }
 
     private List<List<Card>> getSameTypeCards(List<Card> cardList) {
         List<List<Card>> sameCards = new ArrayList<>();
 
         for (CardType type : CardType.values()) {
-            sameCards.add(cardList.stream().filter(card -> card.Type.equals(type)).collect(Collectors.toList()));
+            sameCards.add(cardList.stream().filter(card -> card.type.equals(type)).collect(Collectors.toList()));
         }
         sameCards.sort(Comparator.comparing(List::size));
         return sameCards;
@@ -252,19 +252,19 @@ public class PokerCardHandler {
         List<List<Card>> sameCards = new ArrayList<>();
 
         for (CardRank rank : CardRank.values()) {
-            sameCards.add(cardList.stream().filter(card -> card.Rank.equals(rank)).collect(Collectors.toList()));
+            sameCards.add(cardList.stream().filter(card -> card.rank.equals(rank)).collect(Collectors.toList()));
         }
         sameCards.sort(Comparator.comparing(List::size));
         return sameCards;
     }
 
     private List<Card> getHighestStraight(List<Card> cards) {
-        cards.sort(Comparator.comparing(c -> c.Rank.ordinal()));
+        cards.sort(Comparator.comparing(c -> c.rank.ordinal()));
 
         List<Card> finalCards = new ArrayList<>();
 
         int inRow = 0;
-        Card ACE = cards.stream().filter(c -> c.Rank.equals(CardRank.ACE)).findFirst().orElse(null);
+        Card ACE = cards.stream().filter(c -> c.rank.equals(CardRank.ACE)).findFirst().orElse(null);
         if (ACE != null) {
             inRow = 1;
             finalCards.add(ACE);
@@ -277,13 +277,13 @@ public class PokerCardHandler {
             }
             Card lastCard = finalCards.get(finalCards.size() - 1);
 
-            if (inRow == 5 && card.Value.equals(lastCard.Value + 1)) {
+            if (inRow == 5 && card.value.equals(lastCard.value + 1)) {
                 finalCards.remove(0);
                 finalCards.add(card);
-            } else if (inRow != 5 && ((card.Rank.equals(CardRank.TWO) && lastCard.Rank.equals(CardRank.ACE)) || card.Value.equals(lastCard.Value + 1))) {
+            } else if (inRow != 5 && ((card.rank.equals(CardRank.TWO) && lastCard.rank.equals(CardRank.ACE)) || card.value.equals(lastCard.value + 1))) {
                 finalCards.add(card);
                 inRow++;
-            } else if (inRow != 5 && !card.Value.equals(lastCard.Value)) {
+            } else if (inRow != 5 && !card.value.equals(lastCard.value)) {
                 finalCards.clear();
                 finalCards.add(card);
                 inRow = 1;
@@ -297,16 +297,16 @@ public class PokerCardHandler {
     private int getHandValue(List<Card> cards, PokerHand hand) {
         int value = 0;
 
-        for (Card card : cards) value += card.Value;
+        for (Card card : cards) value += card.value;
 
         if (hand.equals(PokerHand.STRAIGHT) || hand.equals(PokerHand.STRAIGHT_FLUSH)) {
-            if (cards.stream().anyMatch(c -> c.Rank.equals(CardRank.ACE)) && cards.stream().anyMatch(c -> c.Rank.equals(CardRank.TWO)))
+            if (cards.stream().anyMatch(c -> c.rank.equals(CardRank.ACE)) && cards.stream().anyMatch(c -> c.rank.equals(CardRank.TWO)))
                 value -= 13;
         }
         return value;
     }
 
-    public static String GetHandText(PokerHand hand) {
+    public static String getHandText(PokerHand hand) {
         String message = "";
 
         switch (hand) {
@@ -345,7 +345,7 @@ public class PokerCardHandler {
         return message + ChatColor.WHITE;
     }
 
-    public static String GetCardHandText(PlayerPokerHand pokerHand) {
-        return ChatColor.WHITE + "| " + Card.GetTextCard(pokerHand.FirstCard) + " | " + Card.GetTextCard(pokerHand.SecondCard) + " | - " + GetHandText(pokerHand.Hand);
+    public static String getCardHandText(PlayerPokerHand pokerHand) {
+        return ChatColor.WHITE + "| " + Card.getTextCard(pokerHand.firstCard) + " | " + Card.getTextCard(pokerHand.secondCard) + " | - " + getHandText(pokerHand.hand);
     }
 }

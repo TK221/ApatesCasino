@@ -9,28 +9,28 @@ import java.util.UUID;
 
 public class Lobby {
 
-    public final String ID;
+    public final String id;
 
-    private final int MaxPlayers;
-    private final int MinPlayers;
+    private final int maxPlayers;
+    private final int minPlayers;
 
     private final List<LobbyPlayer> players = new ArrayList<>();
 
 
     public Lobby(int maxPlayers, int minPlayers, String id) {
-        ID = id;
-        MaxPlayers = maxPlayers;
-        MinPlayers = minPlayers;
+        this.id = id;
+        this.maxPlayers = maxPlayers;
+        this.minPlayers = minPlayers;
     }
 
-    public void AddPlayer(Player player) {
+    public void addPlayer(Player player) {
 
         if (player != null) {
             players.add(new LobbyPlayer(player.getUniqueId(), PlayerState.NEW, player));
         }
     }
 
-    public void RemovePlayer(UUID playerID) {
+    public void removePlayer(UUID playerID) {
         players.remove(getPlayerFromList(playerID));
     }
 
@@ -52,16 +52,16 @@ public class Lobby {
         return players;
     }
 
-    public void ChangePlayerState(UUID playerID, PlayerState state) {
+    public void changePlayerState(UUID playerID, PlayerState state) {
         getPlayerFromList(playerID).setPlayerState(state);
     }
 
     public int getMaxPlayers() {
-        return MaxPlayers;
+        return maxPlayers;
     }
 
     public int getMinPlayers() {
-        return MinPlayers;
+        return minPlayers;
     }
 
     private LobbyPlayer getPlayerFromList(UUID PlayerID) {

@@ -6,16 +6,16 @@ import de.tk.apatescasino.games.config.LocationCoordinates;
 public class PokerConfig extends GameConfig {
 
     public LocationCoordinates MainScreenLocation;
-    public int SmallBlind;
-    public int BigBlind;
-    public int MinMoney;
-    public int MaxMoney;
-    public double Fee;
+    public int smallBlind;
+    public int bigBlind;
+    public int minMoney;
+    public int maxMoney;
+    public double fee;
 
-    public int PreparingTime;
-    public int TurnTime;
+    public int preparingTime;
+    public int turnTime;
 
     public PokerConfig(GameConfig gameConfig) {
-        super(gameConfig.GameID, gameConfig.MinPlayers, gameConfig.MaxPlayers, gameConfig.JoinBlockPosition.GetLocation());
+        super(gameConfig.gameID, gameConfig.minPlayers, gameConfig.maxPlayers, gameConfig.joinBlockPosition.getLocation());
     }
 }

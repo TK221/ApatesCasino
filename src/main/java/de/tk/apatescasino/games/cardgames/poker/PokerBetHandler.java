@@ -1,6 +1,6 @@
 package de.tk.apatescasino.games.cardgames.poker;
 
-import de.tk.apatescasino.games.utilities.PlayerBet;
+import de.tk.apatescasino.games.utilities.playerBet;
 import org.bukkit.ChatColor;
 
 import java.util.Collections;
@@ -10,49 +10,49 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class PokerBetHandler {
-    public final int MinMoney;
-    public final int SmallBlind;
-    public final int BigBlind;
-    public Integer CurrentMinBet;
-    public Integer Pot;
+    public final int minMoney;
+    public final int smallBlind;
+    public final int bigBlind;
+    public Integer currentMinBet;
+    public Integer pot;
     public Map<Integer, Integer> sidePots;
 
     // Presets of betting amounts
-    public final Integer[] BetAmounts;
+    public final Integer[] betAmounts;
 
-    public Integer SmallBlindPlayer;
-    public Integer BigBlindPlayer;
+    public Integer smallBlindPlayer;
+    public Integer bigBlindPlayer;
 
 
     public PokerBetHandler(int minMoney, int smallBlind, int bigBlind) {
-        this.MinMoney = minMoney;
-        this.SmallBlind = smallBlind;
-        this.BigBlind = bigBlind;
+        this.minMoney = minMoney;
+        this.smallBlind = smallBlind;
+        this.bigBlind = bigBlind;
 
-        this.SmallBlindPlayer = 0;
-        this.BigBlindPlayer = 0;
+        this.smallBlindPlayer = 0;
+        this.bigBlindPlayer = 0;
 
-        BetAmounts = new Integer[]{5, 10, 50, 100, 500};
+        betAmounts = new Integer[]{5, 10, 50, 100, 500};
     }
 
-    public boolean PlayerBetMoney(PlayerBet bet, int amount) {
+    public boolean playerBetMoney(playerBet bet, int amount) {
         if (bet == null) return false;
 
-        if (bet.TransferMoneyToStake(amount)) {
-            Pot += amount;
-            if (CurrentMinBet < bet.GetStake()) CurrentMinBet = bet.GetStake();
+        if (bet.transferMoneyToStake(amount)) {
+            pot += amount;
+            if (currentMinBet < bet.getStake()) currentMinBet = bet.getStake();
             return true;
         } else return false;
 
     }
 
-    public void DistributeMoney(List<List<PokerPlayerProperties>> playerWinOrder) {
-        int endPot = Pot;
+    public void distributeMoney(List<List<PokerPlayerProperties>> playerWinOrder) {
+        int endPot = pot;
 
         for (List<PokerPlayerProperties> playerList : playerWinOrder) {
             if (endPot <= 0) return;
 
-            List<PokerPlayerProperties> highestStakePlayerProperties = playerList.stream().sorted(Comparator.comparing(p -> p.bet.GetStake())).collect(Collectors.toList());
+            List<PokerPlayerProperties> highestStakePlayerProperties = playerList.stream().sorted(Comparator.comparing(p -> p.bet.getStake())).collect(Collectors.toList());
             Collections.reverse(highestStakePlayerProperties);
 
             int highestStakePlayerNumber = highestStakePlayerProperties.get(0).playerNumber;
@@ -60,13 +60,13 @@ public class PokerBetHandler {
 
             int totalStake = 0;
             for (PokerPlayerProperties playerProperties : highestStakePlayerProperties)
-                totalStake += playerProperties.bet.GetStake();
+                totalStake += playerProperties.bet.getStake();
 
             for (PokerPlayerProperties playerProperties : playerList) {
-                float percentage = (float) playerProperties.bet.GetStake() / totalStake;
+                float percentage = (float) playerProperties.bet.getStake() / totalStake;
                 float money = endPot < maxPot ? endPot * percentage : maxPot * percentage;
 
-                playerProperties.bet.AddMoney((int) money);
+                playerProperties.bet.addMoney((int) money);
 
                 System.out.println(playerProperties.Player.getDisplayName() + ": " + money);
             }

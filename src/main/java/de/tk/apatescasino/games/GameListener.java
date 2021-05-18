@@ -30,20 +30,20 @@ public class GameListener implements Listener {
     public void onPlayerDie(PlayerDeathEvent event) {
         UUID playerID = event.getEntity().getUniqueId();
 
-        Game game = lobbyManager.GetGameByPlayer(playerID);
+        Game game = lobbyManager.getGameByPlayer(playerID);
 
         if (game != null) {
-            game.RemovePlayer(playerID);
+            game.removePlayer(playerID);
         }
     }
 
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent event) {
         UUID playerID = event.getPlayer().getUniqueId();
-        Game game = lobbyManager.GetGameByPlayer(playerID);
+        Game game = lobbyManager.getGameByPlayer(playerID);
 
         if (game != null) {
-            game.RemovePlayer(playerID);
+            game.removePlayer(playerID);
         }
     }
 
@@ -54,13 +54,13 @@ public class GameListener implements Listener {
         Block block = event.getClickedBlock();
 
         if (event.getHand() == EquipmentSlot.HAND && block != null) {
-            if (gameConfigManager.PlayerHasConfigWriter(playerID)) {
-                gameConfigManager.PlayerSendLocation(playerID, block.getLocation());
+            if (gameConfigManager.playerHasConfigWriter(playerID)) {
+                gameConfigManager.playerSendLocation(playerID, block.getLocation());
 
-            } else if (lobbyManager.GetGameByJoinBlock(block.getLocation()) != null) {
-                if (lobbyManager.GetGameByPlayer(playerID) == null) {
-                    Game joinBlockGame = lobbyManager.GetGameByJoinBlock(block.getLocation());
-                    joinBlockGame.AddPlayer(player);
+            } else if (lobbyManager.getGameByJoinBlock(block.getLocation()) != null) {
+                if (lobbyManager.getGameByPlayer(playerID) == null) {
+                    Game joinBlockGame = lobbyManager.getGameByJoinBlock(block.getLocation());
+                    joinBlockGame.addPlayer(player);
                 } else player.sendMessage(ChatColor.YELLOW + "Du bist bereits in einem Spiel");
             }
         }
@@ -71,13 +71,13 @@ public class GameListener implements Listener {
         Player player = event.getPlayer();
         String message = event.getMessage();
 
-        if (ApatesCasino.GetChatMessageHandler().HandleChat(player, message)) event.setCancelled(true);
+        if (ApatesCasino.getChatMessageHandler().handleChat(player, message)) event.setCancelled(true);
 
-        if (gameConfigManager.PlayerHasConfigWriter(player.getUniqueId())) {
+        if (gameConfigManager.playerHasConfigWriter(player.getUniqueId())) {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    gameConfigManager.PlayerSendMessage(player.getUniqueId(), message);
+                    gameConfigManager.playerSendMessage(player.getUniqueId(), message);
                 }
             }.runTask(ApatesCasino.getInstance());
 

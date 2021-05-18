@@ -10,17 +10,17 @@ import java.util.List;
 
 public class Card {
 
-    public CardColor Color;
-    public CardType Type;
-    public CardRank Rank;
-    public Integer Value;
+    public CardColor color;
+    public CardType type;
+    public CardRank rank;
+    public Integer value;
 
 
     public Card(CardColor color, CardType type, CardRank rank, Integer value) {
-        this.Color = color;
-        this.Type = type;
-        this.Rank = rank;
-        this.Value = value;
+        this.color = color;
+        this.type = type;
+        this.rank = rank;
+        this.value = value;
     }
 
     public static ItemStack getCardItem(Card card) {
@@ -30,10 +30,10 @@ public class Card {
 
         String cardName = "";
 
-        if (card.Color == CardColor.RED) cardName += ChatColor.RED;
+        if (card.color == CardColor.RED) cardName += ChatColor.RED;
         else cardName += ChatColor.DARK_GRAY;
 
-        cardName += GetTypeSymbol(card.Type) + " " + GetGermanRank(card.Rank) + " " + GetTypeSymbol(card.Type);
+        cardName += getTypeSymbol(card.type) + " " + getGermanRank(card.rank) + " " + getTypeSymbol(card.type);
 
         itemMeta.setDisplayName(cardName);
         cardItem.setItemMeta(itemMeta);
@@ -41,28 +41,28 @@ public class Card {
         return cardItem;
     }
 
-    public static String GetTextCard(Card card) {
-        return GetTypeSymbol(card.Type) + " " + GetCardColor(card.Type) + GetGermanRank(card.Rank) + " " + GetTypeSymbol(card.Type) + ChatColor.WHITE;
+    public static String getTextCard(Card card) {
+        return getTypeSymbol(card.type) + " " + getCardColor(card.type) + getGermanRank(card.rank) + " " + getTypeSymbol(card.type) + ChatColor.WHITE;
     }
 
-    public static String GetCardsAsText(List<Card> cards) {
+    public static String getCardsAsText(List<Card> cards) {
         if (cards.size() == 0) return "";
         StringBuilder cardMessage = new StringBuilder(ChatColor.WHITE.toString());
 
         for (Card card : cards) {
-            cardMessage.append(" | ").append(Card.GetTextCard(card));
+            cardMessage.append(" | ").append(Card.getTextCard(card));
         }
         cardMessage.append(" |");
 
         return cardMessage.toString();
     }
 
-    public static String GetCardColor(CardType type) {
+    public static String getCardColor(CardType type) {
         if (type == CardType.CLUB || type == CardType.SPADE) return ChatColor.DARK_GRAY.toString();
         else return ChatColor.DARK_RED.toString();
     }
 
-    public static String GetTypeSymbol(CardType type) {
+    public static String getTypeSymbol(CardType type) {
         String symbol = "";
         switch (type) {
             case CLUB:
@@ -81,7 +81,7 @@ public class Card {
         return symbol += ChatColor.WHITE;
     }
 
-    public static String GetGermanRank(CardRank rank) {
+    public static String getGermanRank(CardRank rank) {
         switch (rank) {
             case TWO:
                 return "2";

@@ -47,12 +47,12 @@ public final class ApatesCasino extends JavaPlugin {
 
         Objects.requireNonNull(this.getCommand("casino")).setExecutor(new CasinoCommand(lobbyManager, gameConfigManager, bankAccountHandler));
 
-        gameConfigManager.CreateAllGames();
+        gameConfigManager.createAllGames();
     }
 
     @Override
     public void onDisable() {
-        for (Game game : lobbyManager.GetAllGames()) game.CancelGame();
+        for (Game game : lobbyManager.getAllGames()) game.cancelGame();
     }
 
     private boolean setupEconomy() {
@@ -79,7 +79,7 @@ public final class ApatesCasino extends JavaPlugin {
         return bankAccountHandler;
     }
 
-    public static ChatMessageHandler GetChatMessageHandler() {
+    public static ChatMessageHandler getChatMessageHandler() {
         return chatMessageHandler;
     }
 }

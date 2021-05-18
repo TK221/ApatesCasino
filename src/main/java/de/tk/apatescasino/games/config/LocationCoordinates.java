@@ -7,19 +7,19 @@ import java.util.UUID;
 
 
 public class LocationCoordinates {
-    public String WorldID;
-    public double XCor;
-    public double YCor;
-    public double ZCor;
+    public String worldID;
+    public double xCor;
+    public double yCor;
+    public double zCor;
 
     public LocationCoordinates(Location location) {
-        this.WorldID = location.getWorld().getUID().toString();
-        this.XCor = location.getX();
-        this.YCor = location.getY();
-        this.ZCor = location.getZ();
+        this.worldID = location.getWorld().getUID().toString();
+        this.xCor = location.getX();
+        this.yCor = location.getY();
+        this.zCor = location.getZ();
     }
 
-    public Location GetLocation() {
-        return new Location(Bukkit.getWorld(UUID.fromString(WorldID)), XCor, YCor, ZCor);
+    public Location getLocation() {
+        return new Location(Bukkit.getWorld(UUID.fromString(worldID)), xCor, yCor, zCor);
     }
 }

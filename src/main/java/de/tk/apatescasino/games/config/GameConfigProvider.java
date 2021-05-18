@@ -23,14 +23,14 @@ public class GameConfigProvider {
     }
 
 
-    public boolean AddNewConfig(GameConfig config) {
+    public boolean addNewConfig(GameConfig config) {
         try {
             if (config instanceof PokerConfig) {
 
                 HashMap<String, PokerConfig> pokerConfigs = loadPokerConfigs();
 
-                if (!pokerConfigs.containsKey(config.GameID))
-                    pokerConfigs.put(config.GameID, (PokerConfig) config);
+                if (!pokerConfigs.containsKey(config.gameID))
+                    pokerConfigs.put(config.gameID, (PokerConfig) config);
 
                 savePokerConfigs(pokerConfigs);
                 return true;
@@ -39,8 +39,8 @@ public class GameConfigProvider {
 
                 HashMap<String, BlackJackConfig> blackJackConfigs = loadBlackJackConfigs();
 
-                if (!blackJackConfigs.containsKey(config.GameID))
-                    blackJackConfigs.put(config.GameID, (BlackJackConfig) config);
+                if (!blackJackConfigs.containsKey(config.gameID))
+                    blackJackConfigs.put(config.gameID, (BlackJackConfig) config);
 
                 saveBlackJackConfigs(blackJackConfigs);
                 return true;
@@ -54,7 +54,7 @@ public class GameConfigProvider {
         }
     }
 
-    public boolean RemoveConfig(String gameID, GameType gameType) {
+    public boolean removeConfig(String gameID, GameType gameType) {
         try {
             switch (gameType) {
                 case POKER:
@@ -76,7 +76,7 @@ public class GameConfigProvider {
         }
     }
 
-    public void CreateGames() {
+    public void createGames() {
         try {
             for (BlackJackConfig config : loadBlackJackConfigs().values()) createBlackJackGame(config);
             for (PokerConfig config : loadPokerConfigs().values()) createPokerGame(config);
@@ -103,8 +103,8 @@ public class GameConfigProvider {
     }
 
     private void createBlackJackGame(BlackJackConfig config) {
-        lobbyManager.AddGame(new BlackJack(config.GameID, config.MinPlayers, config.MaxPlayers, config.JoinBlockPosition.GetLocation(),
-                config.MinBet, config.MaxBet, config.PreparingTime, config.TurnTime), config.GameID);
+        lobbyManager.addGame(new BlackJack(config.gameID, config.minPlayers, config.maxPlayers, config.joinBlockPosition.getLocation(),
+                config.minBet, config.maxBet, config.preparingTime, config.turnTime), config.gameID);
     }
 
     // ---- Poker ----
@@ -125,8 +125,8 @@ public class GameConfigProvider {
     }
 
     private void createPokerGame(PokerConfig config) {
-        lobbyManager.AddGame(new Poker(config.GameID, config.JoinBlockPosition.GetLocation(), config.SmallBlind, config.BigBlind,
-                config.MinMoney, config.MinPlayers, config.MaxPlayers, config.TurnTime, config.PreparingTime), config.GameID);
+        lobbyManager.addGame(new Poker(config.gameID, config.joinBlockPosition.getLocation(), config.smallBlind, config.bigBlind,
+                config.minMoney, config.minPlayers, config.maxPlayers, config.turnTime, config.preparingTime), config.gameID);
     }
 
 

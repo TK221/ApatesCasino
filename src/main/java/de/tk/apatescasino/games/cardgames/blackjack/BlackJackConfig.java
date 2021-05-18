@@ -7,13 +7,13 @@ import de.tk.apatescasino.games.config.LocationCoordinates;
 public class BlackJackConfig extends GameConfig {
 
     public LocationCoordinates MainScreenLocation;
-    public int MinBet;
-    public int MaxBet;
+    public int minBet;
+    public int maxBet;
 
-    public int PreparingTime;
-    public int TurnTime;
+    public int preparingTime;
+    public int turnTime;
 
     public BlackJackConfig(GameConfig gameConfig) {
-        super(gameConfig.GameID, gameConfig.MinPlayers, gameConfig.MaxPlayers, gameConfig.JoinBlockPosition.GetLocation());
+        super(gameConfig.gameID, gameConfig.minPlayers, gameConfig.maxPlayers, gameConfig.joinBlockPosition.getLocation());
     }
 }

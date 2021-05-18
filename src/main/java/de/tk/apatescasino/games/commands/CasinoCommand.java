@@ -44,20 +44,20 @@ public class CasinoCommand implements CommandExecutor {
         } else if (args.length == 2) {
             if (args[0].equalsIgnoreCase("create") && args[1].equalsIgnoreCase("cancel")) {
 
-                if (!gameConfigManager.PlayerHasConfigWriter(playerID)) {
+                if (!gameConfigManager.playerHasConfigWriter(playerID)) {
                     player.sendMessage(ChatColor.RED + "Sie besitzen zurzeit keinen Config-Ersteller");
                 }
-                gameConfigManager.RemoveConfigWriter(playerID);
+                gameConfigManager.removeConfigWriter(playerID);
 
-                if (!gameConfigManager.PlayerHasConfigWriter(playerID))
+                if (!gameConfigManager.playerHasConfigWriter(playerID))
                     player.sendMessage(ChatColor.GREEN + "Config-Ersteller erfolgreich gelöscht");
                 else player.sendMessage(ChatColor.RED + "Fehler beim löschen ihres Config-Erstellers");
 
             } else if (args[0].equalsIgnoreCase("remove")) {
                 String name = args[1];
 
-                if (lobbyManager.GameExist(name)) {
-                    gameConfigManager.RemoveGame(name, lobbyManager.GetGame(name).getGameType());
+                if (lobbyManager.gameExist(name)) {
+                    gameConfigManager.removeGame(name, lobbyManager.getGame(name).getGameType());
                     player.sendMessage(ChatColor.GREEN + name + " Erfolgreich gelöscht");
                 } else {
                     player.sendMessage(ChatColor.RED + "Dieses Spiel existiert leider nicht");
@@ -69,10 +69,10 @@ public class CasinoCommand implements CommandExecutor {
             if (args[0].equalsIgnoreCase("create")) {
                 String name = args[2];
 
-                if (gameConfigManager.PlayerHasConfigWriter(playerID)) {
+                if (gameConfigManager.playerHasConfigWriter(playerID)) {
                     player.sendMessage("Sie erstellen bereits ein Spiel");
                     return false;
-                } else if (lobbyManager.GameExist(name)) {
+                } else if (lobbyManager.gameExist(name)) {
                     player.sendMessage(ChatColor.RED + "Das Spiel mit diesem Namen existiert schon");
                     return false;
                 } else if (!args[3].matches("[0-9]+") || !args[4].matches("[0-9]+")) {
@@ -82,11 +82,11 @@ public class CasinoCommand implements CommandExecutor {
 
                 switch (args[1].toLowerCase()) {
                     case "poker":
-                        gameConfigManager.AddConfigWriter(playerID, new PokerConfigWriter(playerID,
+                        gameConfigManager.addConfigWriter(playerID, new PokerConfigWriter(playerID,
                                 new GameConfig(name, Integer.parseInt(args[3]), Integer.parseInt(args[4]), facingBlock.getLocation()), gameConfigManager));
                         break;
                     case "blackjack":
-                        gameConfigManager.AddConfigWriter(playerID, new BlackJackConfigWriter(playerID,
+                        gameConfigManager.addConfigWriter(playerID, new BlackJackConfigWriter(playerID,
                                 new GameConfig(name, Integer.parseInt(args[3]), Integer.parseInt(args[4]), facingBlock.getLocation()), gameConfigManager));
                         break;
 
@@ -94,7 +94,7 @@ public class CasinoCommand implements CommandExecutor {
                         return false;
                 }
 
-                if (lobbyManager.GetGame(name) != null)
+                if (lobbyManager.getGame(name) != null)
                     player.sendMessage(ChatColor.GREEN + name + " Erfolgreich erstellt!");
             }
         }

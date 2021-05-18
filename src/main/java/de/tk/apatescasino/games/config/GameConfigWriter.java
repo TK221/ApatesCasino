@@ -5,7 +5,7 @@ import org.bukkit.Location;
 
 public interface GameConfigWriter {
 
-    public void AddPositions(Location location);
+    public void addPositions(Location location);
 
-    public void AddMessage(String message);
+    public void addMessage(String message);
 }
