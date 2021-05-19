@@ -42,7 +42,11 @@ public class CasinoCommand implements CommandExecutor {
                 bankAccountHandler.writeLastTransactions(player);
             }
         } else if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("create") && args[1].equalsIgnoreCase("cancel")) {
+            if (args[0].equalsIgnoreCase("disable")) {
+
+            } else if (args[0].equalsIgnoreCase("enable")) {
+
+            } else if (args[0].equalsIgnoreCase("create") && args[1].equalsIgnoreCase("cancel")) {
 
                 if (!gameConfigManager.playerHasConfigWriter(playerID)) {
                     player.sendMessage(ChatColor.RED + "Sie besitzen zurzeit keinen Config-Ersteller");

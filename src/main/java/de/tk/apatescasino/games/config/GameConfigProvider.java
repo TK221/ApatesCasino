@@ -12,6 +12,8 @@ import de.tk.apatescasino.games.lobby.LobbyManager;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class GameConfigProvider {
 
@@ -26,32 +28,85 @@ public class GameConfigProvider {
     public boolean addNewConfig(GameConfig config) {
         try {
             if (config instanceof PokerConfig) {
-
-                HashMap<String, PokerConfig> pokerConfigs = loadPokerConfigs();
-
-                if (!pokerConfigs.containsKey(config.gameID))
-                    pokerConfigs.put(config.gameID, (PokerConfig) config);
-
-                savePokerConfigs(pokerConfigs);
-                return true;
+                PokerConfig pokerConfig = (PokerConfig) getConfig(config.gameID, GameType.POKER);
+                if (pokerConfig == null) {
+                    saveConfig(config);
+                    return true;
+                }
 
             } else if (config instanceof BlackJackConfig) {
-
-                HashMap<String, BlackJackConfig> blackJackConfigs = loadBlackJackConfigs();
-
-                if (!blackJackConfigs.containsKey(config.gameID))
-                    blackJackConfigs.put(config.gameID, (BlackJackConfig) config);
-
-                saveBlackJackConfigs(blackJackConfigs);
-                return true;
+                BlackJackConfig blackJackConfig = (BlackJackConfig) getConfig(config.gameID, GameType.BLACKJACK);
+                if (blackJackConfig == null) {
+                    saveConfig(config);
+                    return true;
+                }
 
             } else {
                 return false;
             }
         } catch (Exception e) {
             System.out.println("Error while trying to create new game config: " + e.getMessage());
-            return false;
         }
+
+        return false;
+    }
+
+    // TODO better Perdomance
+    public boolean changeConfigState(String gameID, boolean state) {
+        for (GameType gameType : GameType.values()) {
+
+            GameConfig gameConfig = getConfig(gameID, gameType);
+            if (gameConfig != null) {
+                gameConfig.disabled = state;
+                saveConfig(gameConfig);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public GameConfig getConfig(String gameID, GameType gameType) {
+        try {
+            switch (gameType) {
+
+                case POKER:
+                    HashMap<String, PokerConfig> pokerConfigs = loadPokerConfigs();
+                    return pokerConfigs.get(gameID);
+                case BLACKJACK:
+                    HashMap<String, BlackJackConfig> blackJackConfigs = loadBlackJackConfigs();
+                    return blackJackConfigs.get(gameID);
+
+                default:
+                    return null;
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to load game-config: [GameID=" + gameID + "], [GameType=" + gameType + "] - " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    public boolean saveConfig(GameConfig gameConfig) {
+        Objects.requireNonNull(gameConfig);
+
+        String gameID = gameConfig.gameID;
+
+        try {
+            if (gameConfig instanceof BlackJackConfig) {
+                HashMap<String, BlackJackConfig> blackJackConfigs = loadBlackJackConfigs();
+                blackJackConfigs.put(gameID, (BlackJackConfig) gameConfig);
+
+            } else if (gameConfig instanceof PokerConfig) {
+                HashMap<String, PokerConfig> pokerConfigs = loadPokerConfigs();
+                pokerConfigs.put(gameID, (PokerConfig) gameConfig);
+            }
+        } catch (
+                Exception e) {
+            System.out.println("Failed to save game-config: [GameID=" + gameID + "] - " + e.getMessage());
+        }
+
+        return false;
     }
 
     public boolean removeConfig(String gameID, GameType gameType) {
@@ -78,8 +133,10 @@ public class GameConfigProvider {
 
     public void createGames() {
         try {
-            for (BlackJackConfig config : loadBlackJackConfigs().values()) createBlackJackGame(config);
-            for (PokerConfig config : loadPokerConfigs().values()) createPokerGame(config);
+            for (BlackJackConfig config : loadBlackJackConfigs().values().stream().filter(c -> !c.disabled).collect(Collectors.toList()))
+                createBlackJackGame(config);
+            for (PokerConfig config : loadPokerConfigs().values().stream().filter(c -> !c.disabled).collect(Collectors.toList()))
+                createPokerGame(config);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }

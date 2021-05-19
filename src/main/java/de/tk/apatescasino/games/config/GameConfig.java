@@ -7,11 +7,13 @@ public class GameConfig {
     public int minPlayers;
     public int maxPlayers;
     public LocationCoordinates joinBlockPosition;
+    public boolean disabled;
 
     public GameConfig(String gameID, int minPlayers, int maxPlayers, Location joinBlockPosition) {
         this.gameID = gameID;
         this.minPlayers = minPlayers;
         this.maxPlayers = maxPlayers;
         this.joinBlockPosition = new LocationCoordinates(joinBlockPosition);
+        disabled = false;
     }
 }

@@ -245,12 +245,12 @@ public class Poker implements Game {
             playerList.get(playerOnTurn).State = PlayerPokerState.WAITING;
         }
         updateHologram();
-        /*
+
         if (getActivePlayers().size() == 1) {
             playerOnTurn = 0;
             dealerTurn();
             return;
-        }*/
+        }
 
         for (playerOnTurn = getNextActivePlayerNumber(playerOnTurn); playerOnTurn != 0; playerOnTurn = getNextActivePlayerNumber(playerOnTurn)) {
             if (playerList.get(playerOnTurn).bet.getMoney() > 0) {
