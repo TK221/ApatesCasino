@@ -21,7 +21,7 @@ public class playerBet {
         money += amount;
     }
 
-    private boolean removeMoney(int amount) {
+    public boolean removeMoney(int amount) {
         if (money >= amount) {
             money -= amount;
             return true;

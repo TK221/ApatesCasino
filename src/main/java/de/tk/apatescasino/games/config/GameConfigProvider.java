@@ -4,9 +4,7 @@ import com.google.gson.reflect.TypeToken;
 import de.tk.apatescasino.ApatesCasino;
 import de.tk.apatescasino.ConfigManager;
 import de.tk.apatescasino.games.GameType;
-import de.tk.apatescasino.games.cardgames.blackjack.BlackJack;
 import de.tk.apatescasino.games.cardgames.blackjack.BlackJackConfig;
-import de.tk.apatescasino.games.cardgames.poker.Poker;
 import de.tk.apatescasino.games.cardgames.poker.PokerConfig;
 import de.tk.apatescasino.games.lobby.LobbyManager;
 
@@ -15,7 +13,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class GameConfigProvider {
 
@@ -97,12 +94,14 @@ public class GameConfigProvider {
 
                 case POKER:
                     gameConfigs = new ArrayList<>(loadPokerConfigs().values());
-
+                    break;
                 case BLACKJACK:
                     gameConfigs = new ArrayList<>(loadBlackJackConfigs().values());
+                    break;
 
                 default:
                     gameConfigs = new ArrayList<>();
+                    break;
             }
         } catch (Exception e) {
             System.out.println("Failed to load game-configs: [GameType=" + gameType + "] - " + e.getMessage());
@@ -121,10 +120,12 @@ public class GameConfigProvider {
             if (gameConfig instanceof BlackJackConfig) {
                 HashMap<String, BlackJackConfig> blackJackConfigs = loadBlackJackConfigs();
                 blackJackConfigs.put(gameID, (BlackJackConfig) gameConfig);
+                saveBlackJackConfigs(blackJackConfigs);
 
             } else if (gameConfig instanceof PokerConfig) {
                 HashMap<String, PokerConfig> pokerConfigs = loadPokerConfigs();
                 pokerConfigs.put(gameID, (PokerConfig) gameConfig);
+                savePokerConfigs(pokerConfigs);
             }
         } catch (
                 Exception e) {

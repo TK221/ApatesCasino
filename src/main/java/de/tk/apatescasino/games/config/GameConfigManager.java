@@ -1,6 +1,5 @@
 package de.tk.apatescasino.games.config;
 
-import de.tk.apatescasino.games.Game;
 import de.tk.apatescasino.games.GameType;
 import de.tk.apatescasino.games.cardgames.blackjack.BlackJack;
 import de.tk.apatescasino.games.cardgames.blackjack.BlackJackConfig;
@@ -9,7 +8,9 @@ import de.tk.apatescasino.games.cardgames.poker.PokerConfig;
 import de.tk.apatescasino.games.lobby.LobbyManager;
 import org.bukkit.Location;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class GameConfigManager {
@@ -35,9 +36,8 @@ public class GameConfigManager {
     }
 
     public void createNewGame(GameConfig gameConfig, UUID playerID) {
-        createGame(gameConfig);
         gameConfigProvider.addNewConfig(gameConfig);
-
+        createGame(gameConfig);
         configWriterMap.remove(playerID);
     }
 
@@ -53,7 +53,7 @@ public class GameConfigManager {
 
     public void changeGameState(String gameID, boolean state) {
         if (state) {
-            gameConfigProvider.changeConfigState(gameID, true);
+            gameConfigProvider.changeConfigState(gameID, false);
             // TODO better
             for (GameType gameType : GameType.values()) {
                 GameConfig gameConfig = gameConfigProvider.getConfig(gameID, gameType);
@@ -64,7 +64,7 @@ public class GameConfigManager {
 
         } else {
             lobbyManager.removeGame(gameID);
-            gameConfigProvider.changeConfigState(gameID, false);
+            gameConfigProvider.changeConfigState(gameID, true);
         }
 
     }

@@ -69,12 +69,13 @@ public class BlackJack implements Game {
     private Integer croupierCardsValue;
 
     private final Hologram hologram;
+    private TextLine gameInformationLine;
     private final TextLine croupierLine;
     private final TextLine croupierCardsLine;
     private final TextLine playerLine;
     private final TextLine playerCardsLine;
 
-    public BlackJack(String id, int minPlayers, int maxPlayers, Location joinBlockPosition, int minBet, int maxBet, int preparingTime, int turnTime) {
+    public BlackJack(String id, int minPlayers, int maxPlayers, Location joinBlockPosition, Location mainScreenLocation, int minBet, int maxBet, int preparingTime, int turnTime) {
         this.minPlayers = minPlayers;
         this.maxPlayers = maxPlayers;
         this.joinBlockPosition = joinBlockPosition;
@@ -92,14 +93,14 @@ public class BlackJack implements Game {
         croupierCardsValue = 0;
 
         // initialize hologram
-        Location location = new Location(joinBlockPosition.getWorld(), joinBlockPosition.getBlockX() + 0.5, joinBlockPosition.getBlockY() + 2.5, joinBlockPosition.getBlockZ() + 0.5);
-        hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), location);
+        hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), mainScreenLocation.add(0.5, 0.5, 0.5));
 
         hologram.insertTextLine(0, ChatColor.BLUE + "BlackJack: " + lobby.id);
-        croupierLine = hologram.insertTextLine(1, ChatColor.DARK_PURPLE + "Croupier:");
-        croupierCardsLine = hologram.insertTextLine(2, "");
-        playerLine = hologram.insertTextLine(3, ChatColor.WHITE + "---");
-        playerCardsLine = hologram.insertTextLine(4, "");
+        gameInformationLine = hologram.insertTextLine(1, ChatColor.YELLOW + "Zurzeit kein Spiel im gange");
+        croupierLine = hologram.insertTextLine(2, "");
+        croupierCardsLine = hologram.insertTextLine(3, "");
+        playerLine = hologram.insertTextLine(4, ChatColor.WHITE + "---");
+        playerCardsLine = hologram.insertTextLine(5, "");
 
         Bukkit.getScheduler().scheduleSyncRepeatingTask(ApatesCasino.getInstance(), () -> {
             for (BlackJackPlayer player : playerMap.values()) {
@@ -582,7 +583,7 @@ public class BlackJack implements Game {
     }
 
     public static Game createGame(BlackJackConfig config) {
-        return new BlackJack(config.gameID, config.minPlayers, config.maxPlayers, config.joinBlockPosition.getLocation(),
-                    config.minBet, config.maxBet, config.preparingTime, config.turnTime);
+        return new BlackJack(config.gameID, config.minPlayers, config.maxPlayers, config.joinBlockPosition.getLocation(), config.MainScreenLocation.getLocation(),
+                config.minBet, config.maxBet, config.preparingTime, config.turnTime);
     }
 }

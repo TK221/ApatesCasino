@@ -117,7 +117,7 @@ public class Poker implements Game {
     private TextLine playerInformationLine;
 
 
-    public Poker(String name, Location joinBlockPosition, Location mainScreenLocation, int smallBlind, int bigBlind, int minMoney, int minPlayers, int maxPlayers, int turnTime, int preparingTime) {
+    public Poker(String name, Location joinBlockPosition, Location mainScreenLocation, int smallBlind, int bigBlind, int minMoney, int minPlayers, int maxPlayers, int turnTime, int preparingTime, double fee) {
         messageWaitingPlayers = new ArrayList<>();
         playerList = new HashMap<>();
         oldPlayerBalance = new HashMap<>();
@@ -132,7 +132,7 @@ public class Poker implements Game {
         // Initialize lobby for the players
         this.lobby = new Lobby(minPlayers, maxPlayers, name);
         this.cardHandler = new PokerCardHandler();
-        this.betHandler = new PokerBetHandler(minMoney, smallBlind, bigBlind);
+        this.betHandler = new PokerBetHandler(minMoney, smallBlind, bigBlind, fee);
 
         gameState = GameState.WAITFORPLAYERS;
 
@@ -241,7 +241,7 @@ public class Poker implements Game {
         if (turnCounter != null) turnCounter.cancel();
 
         if (playerOnTurn != 0 && playerList.containsKey(playerOnTurn) && !playerList.get(playerOnTurn).State.equals(PlayerPokerState.PREPARING)) {
-            clearHotBar(playerList.get(playerOnTurn));
+            setWaitingBar(playerList.get(playerOnTurn));
             playerList.get(playerOnTurn).State = PlayerPokerState.WAITING;
         }
         updateHologram();
@@ -351,7 +351,7 @@ public class Poker implements Game {
         Set<Integer> playerNumbers = new HashSet<>(playerList.keySet());
         for (Integer playerNumber : playerNumbers) {
             PokerPlayerProperties playerProperties = playerList.get(playerNumber);
-            setWaitingItemBar(playerProperties);
+            setPreparingBar(playerProperties);
 
             if (playerProperties.bet.getMoney() <= 0) removePlayer(playerProperties.playerID);
             else playerProperties.State = PlayerPokerState.PREPARING;
@@ -434,7 +434,7 @@ public class Poker implements Game {
     private void playerFold(PokerPlayerProperties playerProperties) {
         playerProperties.State = PlayerPokerState.PREPARING;
         playerProperties.bet.resetStake();
-        clearHotBar(playerProperties);
+        setPreparingBar(playerProperties);
 
         if (playerOnTurn.equals(playerProperties.playerNumber)) nextPlayer();
 
@@ -466,11 +466,16 @@ public class Poker implements Game {
         for (int i = 0; i < 9; i++) if (betItemList.containsKey(i)) inventory.setItem(i, betItemList.get(i));
     }
 
-    private void setWaitingItemBar(PokerPlayerProperties playerProperties) {
+    private void setPreparingBar(PokerPlayerProperties playerProperties) {
         PlayerInventory playerInventory = playerList.get(playerProperties.playerNumber).Player.getInventory();
         clearHotBar(playerProperties);
 
         playerInventory.setItem(7, LEAVEITEM);
+    }
+
+    public void setWaitingBar(PokerPlayerProperties playerProperties) {
+        PlayerInventory playerInventory = playerList.get(playerProperties.playerNumber).Player.getInventory();
+        clearHotBar(playerProperties);
 
         if (playerProperties.hand.firstCard != null && playerProperties.hand.secondCard != null) {
             playerInventory.setItem(0, Card.getCardItem(playerProperties.hand.firstCard));
@@ -522,7 +527,7 @@ public class Poker implements Game {
     }
 
     private void initHologram(Location screenLocation) {
-        hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), screenLocation);
+        hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), screenLocation.add(0.5, 0.5, 0.5));
 
         hologram.insertTextLine(0, ChatColor.BLUE + "Poker: " + lobby.id);
         hologram.insertTextLine(1, ChatColor.WHITE + "-------");
@@ -581,9 +586,9 @@ public class Poker implements Game {
                 player.sendMessage(POKER_PREFIX + ChatColor.GREEN + "Sie sind nun mit " + ChatColor.GOLD + amount + " Tokens" + ChatColor.GREEN + " im Spiel. Bitte warten sie auf den Beginn der nächsten Runde");
 
                 PokerPlayerProperties playerProperties = getPlayerPropertiesByID(playerID);
-                if (playerProperties != null) setWaitingItemBar(playerProperties);
+                if (playerProperties != null) setPreparingBar(playerProperties);
             } else {
-                player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie müssen mindestens" + ChatColor.GOLD + betHandler.minMoney + " Tokens" + ChatColor.RED + " zum Tisch mitbringen");
+                player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie müssen mindestens " + ChatColor.GOLD + betHandler.minMoney + " Tokens" + ChatColor.RED + " zum Tisch mitbringen");
             }
         } else {
             player.sendMessage(POKER_PREFIX + ChatColor.RED + "Bitte schreiben sie eine akzeptable Geldmenge, Der Mindesteinsatz lautet: " + ChatColor.GOLD + betHandler.minMoney + " Tokens");
@@ -618,7 +623,7 @@ public class Poker implements Game {
         } else if (playerProperties.State.equals(PlayerPokerState.RAISING) && gameState == GameState.ONGOING) {
             switch (slot) {
                 case 0:
-                    clearHotBar(playerProperties);
+                    setPreparingBar(playerProperties);
                     nextPlayer();
                     break;
                 case 2:
@@ -692,12 +697,22 @@ public class Poker implements Game {
 
             playerInventory.setItem(0, Card.getCardItem(playerProperty.hand.firstCard));
             playerInventory.setItem(1, Card.getCardItem(playerProperty.hand.secondCard));
-            clearHotBar(playerProperty);
+            setWaitingBar(playerProperty);
             setPlayerMoneyToActionBar(playerProperty);
         }
 
-        for (PokerPlayerProperties playerProperties : playerList.values())
+        int feeAmount = (int) Math.ceil(betHandler.bigBlind * betHandler.fee);
+
+        for (PokerPlayerProperties playerProperties : playerList.values()) {
+
+            if (betHandler.fee > 0.0 && playerProperties.bet.getMoney() > betHandler.bigBlind + feeAmount) {
+                playerProperties.Player.sendMessage(POKER_PREFIX + "Sie zahlen eine Gebühr von " + feeAmount + " an das Casino");
+                playerProperties.bet.removeMoney(feeAmount);
+                ApatesCasino.getBankAccountHandler().transferToCasino(playerProperties.Player.getPlayer(), feeAmount);
+            }
+
             oldPlayerBalance.put(playerProperties.playerNumber, playerProperties.bet.getMoney());
+        }
 
         if (getActivePlayers().size() > 1) {
             betHandler.smallBlindPlayer = getNextActivePlayerNumber(betHandler.smallBlindPlayer);
@@ -789,6 +804,6 @@ public class Poker implements Game {
 
     public static Game createGame(PokerConfig config) {
         return new Poker(config.gameID, config.joinBlockPosition.getLocation(), config.MainScreenLocation.getLocation(), config.smallBlind, config.bigBlind,
-                config.minMoney, config.minPlayers, config.maxPlayers, config.turnTime, config.preparingTime);
+                config.minMoney, config.minPlayers, config.maxPlayers, config.turnTime, config.preparingTime, config.fee);
     }
 }
