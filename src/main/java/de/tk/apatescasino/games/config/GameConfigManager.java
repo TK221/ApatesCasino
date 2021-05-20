@@ -34,8 +34,8 @@ public class GameConfigManager {
         }
     }
 
-    public void createNewGame(GameConfig gameConfig, Game game, UUID playerID) {
-        lobbyManager.addGame(game, gameConfig.gameID);
+    public void createNewGame(GameConfig gameConfig, UUID playerID) {
+        createGame(gameConfig);
         gameConfigProvider.addNewConfig(gameConfig);
 
         configWriterMap.remove(playerID);

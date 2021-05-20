@@ -96,9 +96,7 @@ public class BlackJackConfigWriter implements GameConfigWriter {
                 sendInformationMessage();
 
             } else {
-                Game game = new BlackJack(config.gameID, config.minPlayers, config.maxPlayers, config.joinBlockPosition.getLocation(),
-                        config.minBet, config.maxBet, config.preparingTime, config.turnTime);
-                gameConfigManager.createNewGame(config, game, playerID);
+                gameConfigManager.createNewGame(config, playerID);
             }
         }
     }

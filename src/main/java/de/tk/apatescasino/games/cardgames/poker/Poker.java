@@ -117,7 +117,7 @@ public class Poker implements Game {
     private TextLine playerInformationLine;
 
 
-    public Poker(String name, Location joinBlockPosition, int smallBlind, int bigBlind, int minMoney, int minPlayers, int maxPlayers, int turnTime, int preparingTime) {
+    public Poker(String name, Location joinBlockPosition, Location mainScreenLocation, int smallBlind, int bigBlind, int minMoney, int minPlayers, int maxPlayers, int turnTime, int preparingTime) {
         messageWaitingPlayers = new ArrayList<>();
         playerList = new HashMap<>();
         oldPlayerBalance = new HashMap<>();
@@ -156,7 +156,7 @@ public class Poker implements Game {
         betHandler.smallBlindPlayer = 0;
         betHandler.bigBlindPlayer = 0;
 
-        initHologram();
+        initHologram(mainScreenLocation);
     }
 
     // Timer for players to respond to the bet amount message
@@ -521,9 +521,8 @@ public class Poker implements Game {
         return players;
     }
 
-    private void initHologram() {
-        Location location = new Location(joinBlockPosition.getWorld(), joinBlockPosition.getBlockX() + 0.5, joinBlockPosition.getBlockY() + 2.5, joinBlockPosition.getBlockZ() + 0.5);
-        hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), location);
+    private void initHologram(Location screenLocation) {
+        hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), screenLocation);
 
         hologram.insertTextLine(0, ChatColor.BLUE + "Poker: " + lobby.id);
         hologram.insertTextLine(1, ChatColor.WHITE + "-------");
@@ -789,7 +788,7 @@ public class Poker implements Game {
     }
 
     public static Game createGame(PokerConfig config) {
-        return new Poker(config.gameID, config.joinBlockPosition.getLocation(), config.smallBlind, config.bigBlind,
+        return new Poker(config.gameID, config.joinBlockPosition.getLocation(), config.MainScreenLocation.getLocation(), config.smallBlind, config.bigBlind,
                 config.minMoney, config.minPlayers, config.maxPlayers, config.turnTime, config.preparingTime);
     }
 }

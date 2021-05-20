@@ -113,9 +113,7 @@ public class PokerConfigWriter implements GameConfigWriter {
                 sendInformationMessage();
 
             } else {
-                Game game = new Poker(config.gameID, config.joinBlockPosition.getLocation(), config.smallBlind, config.bigBlind,
-                        config.minMoney, config.minPlayers, config.maxPlayers, config.turnTime, config.preparingTime);
-                gameConfigManager.createNewGame(config, game, playerID);
+                gameConfigManager.createNewGame(config, playerID);
             }
         }
     }
