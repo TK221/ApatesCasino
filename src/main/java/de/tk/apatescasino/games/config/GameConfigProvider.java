@@ -11,7 +11,9 @@ import de.tk.apatescasino.games.cardgames.poker.PokerConfig;
 import de.tk.apatescasino.games.lobby.LobbyManager;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -87,6 +89,29 @@ public class GameConfigProvider {
         return null;
     }
 
+    public List<GameConfig> getConfigList(GameType gameType) {
+        List<GameConfig> gameConfigs;
+
+        try {
+            switch (gameType) {
+
+                case POKER:
+                    gameConfigs = new ArrayList<>(loadPokerConfigs().values());
+
+                case BLACKJACK:
+                    gameConfigs = new ArrayList<>(loadBlackJackConfigs().values());
+
+                default:
+                    gameConfigs = new ArrayList<>();
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to load game-configs: [GameType=" + gameType + "] - " + e.getMessage());
+            gameConfigs = new ArrayList<>();
+        }
+
+        return gameConfigs;
+    }
+
     public boolean saveConfig(GameConfig gameConfig) {
         Objects.requireNonNull(gameConfig);
 
@@ -131,17 +156,6 @@ public class GameConfigProvider {
         }
     }
 
-    public void createGames() {
-        try {
-            for (BlackJackConfig config : loadBlackJackConfigs().values().stream().filter(c -> !c.disabled).collect(Collectors.toList()))
-                createBlackJackGame(config);
-            for (PokerConfig config : loadPokerConfigs().values().stream().filter(c -> !c.disabled).collect(Collectors.toList()))
-                createPokerGame(config);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
     // ---- BlackJack -----
     private HashMap<String, BlackJackConfig> loadBlackJackConfigs() throws IOException {
         ConfigManager<HashMap<String, BlackJackConfig>> configManager = new ConfigManager<>(getGameConfigPath(GameType.BLACKJACK), ApatesCasino.getInstance());
@@ -157,11 +171,6 @@ public class GameConfigProvider {
         ConfigManager<HashMap<String, BlackJackConfig>> configManager = new ConfigManager<>(getGameConfigPath(GameType.BLACKJACK), ApatesCasino.getInstance());
         configManager.setObject(blackJackConfigs);
         configManager.saveConfig();
-    }
-
-    private void createBlackJackGame(BlackJackConfig config) {
-        lobbyManager.addGame(new BlackJack(config.gameID, config.minPlayers, config.maxPlayers, config.joinBlockPosition.getLocation(),
-                config.minBet, config.maxBet, config.preparingTime, config.turnTime), config.gameID);
     }
 
     // ---- Poker ----
@@ -180,12 +189,6 @@ public class GameConfigProvider {
         configManager.setObject(pokerConfigs);
         configManager.saveConfig();
     }
-
-    private void createPokerGame(PokerConfig config) {
-        lobbyManager.addGame(new Poker(config.gameID, config.joinBlockPosition.getLocation(), config.smallBlind, config.bigBlind,
-                config.minMoney, config.minPlayers, config.maxPlayers, config.turnTime, config.preparingTime), config.gameID);
-    }
-
 
     private static String getGameConfigPath(GameType gameType) {
         String path = gameType.toString().toLowerCase();

@@ -2,12 +2,15 @@ package de.tk.apatescasino.games.config;
 
 import de.tk.apatescasino.games.Game;
 import de.tk.apatescasino.games.GameType;
+import de.tk.apatescasino.games.cardgames.blackjack.BlackJack;
+import de.tk.apatescasino.games.cardgames.blackjack.BlackJackConfig;
+import de.tk.apatescasino.games.cardgames.poker.Poker;
+import de.tk.apatescasino.games.cardgames.poker.PokerConfig;
 import de.tk.apatescasino.games.lobby.LobbyManager;
 import org.bukkit.Location;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class GameConfigManager {
 
@@ -24,7 +27,11 @@ public class GameConfigManager {
     }
 
     public void createAllGames() {
-        gameConfigProvider.createGames();
+        for (GameType gameType : GameType.values()) {
+            gameConfigProvider.getConfigList(gameType)
+                    .stream().filter(c -> !c.disabled).collect(Collectors.toList())
+                    .forEach(this::createGame);
+        }
     }
 
     public void createNewGame(GameConfig gameConfig, Game game, UUID playerID) {
@@ -32,6 +39,34 @@ public class GameConfigManager {
         gameConfigProvider.addNewConfig(gameConfig);
 
         configWriterMap.remove(playerID);
+    }
+
+    public void createGame(GameConfig gameConfig) {
+        String gameID = gameConfig.gameID;
+
+        if (gameConfig instanceof PokerConfig) {
+            lobbyManager.addGame(Poker.createGame((PokerConfig) gameConfig), gameID);
+        } else if (gameConfig instanceof BlackJackConfig) {
+            lobbyManager.addGame(BlackJack.createGame((BlackJackConfig) gameConfig), gameID);
+        }
+    }
+
+    public void changeGameState(String gameID, boolean state) {
+        if (state) {
+            gameConfigProvider.changeConfigState(gameID, true);
+            // TODO better
+            for (GameType gameType : GameType.values()) {
+                GameConfig gameConfig = gameConfigProvider.getConfig(gameID, gameType);
+                if (gameConfig != null) {
+                    createGame(gameConfig);
+                }
+            }
+
+        } else {
+            lobbyManager.removeGame(gameID);
+            gameConfigProvider.changeConfigState(gameID, false);
+        }
+
     }
 
     public void removeGame(String gameID, GameType gameType) {

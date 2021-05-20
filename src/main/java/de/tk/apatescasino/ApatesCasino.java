@@ -8,6 +8,7 @@ import de.tk.apatescasino.games.cardgames.blackjack.BlackJackListener;
 import de.tk.apatescasino.games.cardgames.poker.PokerListener;
 import de.tk.apatescasino.games.commands.CasinoCommand;
 import de.tk.apatescasino.games.config.GameConfigManager;
+import de.tk.apatescasino.games.config.GameConfigProvider;
 import de.tk.apatescasino.games.lobby.LobbyManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.plugin.RegisteredServiceProvider;

@@ -787,4 +787,9 @@ public class Poker implements Game {
     public boolean containsPlayer(UUID playerID) {
         return lobby.getPlayer(playerID) != null;
     }
+
+    public static Game createGame(PokerConfig config) {
+        return new Poker(config.gameID, config.joinBlockPosition.getLocation(), config.smallBlind, config.bigBlind,
+                config.minMoney, config.minPlayers, config.maxPlayers, config.turnTime, config.preparingTime);
+    }
 }

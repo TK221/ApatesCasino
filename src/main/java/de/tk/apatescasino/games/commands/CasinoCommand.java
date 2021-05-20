@@ -43,9 +43,9 @@ public class CasinoCommand implements CommandExecutor {
             }
         } else if (args.length == 2) {
             if (args[0].equalsIgnoreCase("disable")) {
-
+                gameConfigManager.changeGameState(args[1], false);
             } else if (args[0].equalsIgnoreCase("enable")) {
-
+                gameConfigManager.changeGameState(args[1], true);
             } else if (args[0].equalsIgnoreCase("create") && args[1].equalsIgnoreCase("cancel")) {
 
                 if (!gameConfigManager.playerHasConfigWriter(playerID)) {

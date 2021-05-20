@@ -580,4 +580,9 @@ public class BlackJack implements Game {
     public boolean containsPlayer(UUID playerID) {
         return playerMap.containsKey(playerID);
     }
+
+    public static Game createGame(BlackJackConfig config) {
+        return new BlackJack(config.gameID, config.minPlayers, config.maxPlayers, config.joinBlockPosition.getLocation(),
+                    config.minBet, config.maxBet, config.preparingTime, config.turnTime);
+    }
 }
