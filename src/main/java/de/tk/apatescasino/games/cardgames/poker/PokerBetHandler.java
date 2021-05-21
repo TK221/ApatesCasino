@@ -11,9 +11,12 @@ import java.util.stream.Collectors;
 
 public class PokerBetHandler {
     public final int minMoney;
+    public final int maxMoney;
+
     public final int smallBlind;
     public final int bigBlind;
     public final double fee;
+
     public Integer currentMinBet;
     public Integer pot;
     public Map<Integer, Integer> sidePots;
@@ -25,8 +28,9 @@ public class PokerBetHandler {
     public Integer bigBlindPlayer;
 
 
-    public PokerBetHandler(int minMoney, int smallBlind, int bigBlind, double fee) {
+    public PokerBetHandler(int minMoney, int maxMoney, int smallBlind, int bigBlind, double fee) {
         this.minMoney = minMoney;
+        this.maxMoney = maxMoney;
         this.smallBlind = smallBlind;
         this.bigBlind = bigBlind;
         this.fee = fee;

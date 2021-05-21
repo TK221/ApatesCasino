@@ -93,22 +93,22 @@ public class BlackJack implements Game {
         croupierCardsValue = 0;
 
         // initialize hologram
-        hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), mainScreenLocation.add(0.5, 0.5, 0.5));
+        hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), mainScreenLocation.add(0.5, 3.5, 0.5));
 
         hologram.insertTextLine(0, ChatColor.BLUE + "BlackJack: " + lobby.id);
-        gameInformationLine = hologram.insertTextLine(1, ChatColor.YELLOW + "Zurzeit kein Spiel im gange");
-        croupierLine = hologram.insertTextLine(2, "");
-        croupierCardsLine = hologram.insertTextLine(3, "");
-        playerLine = hologram.insertTextLine(4, ChatColor.WHITE + "---");
-        playerCardsLine = hologram.insertTextLine(5, "");
+        hologram.insertTextLine(1, "-------");
+        hologram.insertTextLine(2, "");
+        gameInformationLine = hologram.insertTextLine(3, ChatColor.YELLOW + "Zurzeit kein Spiel im Gange");
+        croupierLine = hologram.insertTextLine(4, "");
+        croupierCardsLine = hologram.insertTextLine(5, "");
+        playerLine = hologram.insertTextLine(6, ChatColor.WHITE + "---");
+        playerCardsLine = hologram.insertTextLine(7, "");
 
         Bukkit.getScheduler().scheduleSyncRepeatingTask(ApatesCasino.getInstance(), () -> {
             for (BlackJackPlayer player : playerMap.values()) {
                 setPlayerInformationBar(player);
             }
         }, 0L, 20L);
-
-        bank.deposit(10000);
 
         waitingForPlayers();
     }
@@ -143,7 +143,7 @@ public class BlackJack implements Game {
                     preparingTimer.cancel();
                 } else {
                     timer--;
-                    playerLine.setText(ChatColor.YELLOW.toString() + timer + " Sekunden bis zum Start");
+                    gameInformationLine.setText(ChatColor.YELLOW.toString() + timer + " Sekunden bis zum Start");
                 }
             }
         }.runTaskTimer(ApatesCasino.getInstance(), 0, 20L);
@@ -151,18 +151,26 @@ public class BlackJack implements Game {
 
     private void startTurnTimer(int seconds) {
         turnTimer = new BukkitRunnable() {
+            int timer = seconds;
+
             @Override
             public void run() {
-                if (currentPlayer != 0) {
-                    BlackJackPlayer player = getPlayerByNumber(currentPlayer);
-                    if (player != null) {
-                        player.Player.sendMessage(BJ_PREFIX + ChatColor.RED + "Ihre Zeit ist um und Ihr Zug beendet");
-                        playerStand();
+
+                if (timer <= 0) {
+                    if (currentPlayer != 0) {
+                        BlackJackPlayer player = getPlayerByNumber(currentPlayer);
+                        if (player != null) {
+                            player.Player.sendMessage(BJ_PREFIX + ChatColor.RED + "Ihre Zeit ist um und Ihr Zug beendet");
+                            playerStand();
+                        }
                     }
+                    nextPlayer();
+                } else {
+                    timer--;
+                    gameInformationLine.setText(ChatColor.YELLOW.toString() + timer + " Sekunden bis zum nächsten Zug");
                 }
-                nextPlayer();
             }
-        }.runTaskLater(ApatesCasino.getInstance(), (seconds * 20L));
+        }.runTaskTimer(ApatesCasino.getInstance(), 0, 20L);
     }
 
     private void startNewGame() {
@@ -197,7 +205,7 @@ public class BlackJack implements Game {
 
     private void nextPlayer() {
         if (turnTimer != null) turnTimer.cancel();
-        System.out.println("next Player");
+
         // Get current player and set waiting properties
         BlackJackPlayer player = getPlayerByNumber(currentPlayer);
         if (player != null && !player.state.equals(BlackJackPlayerState.PREPARING)) {
@@ -260,7 +268,6 @@ public class BlackJack implements Game {
             } else {
                 bank.deposit(player.getStake());
                 player.resetStake();
-                player.state = BlackJackPlayerState.PREPARING;
 
                 player.Player.sendMessage(BJ_PREFIX + ChatColor.RED + "Der Croupier verfügt über bessere Karten, sie haben ihren Einsatz somit verloren");
             }
@@ -276,6 +283,7 @@ public class BlackJack implements Game {
                 player.Player.sendMessage(BJ_PREFIX + ChatColor.GREEN + "Die runde ist beendet und startet erneut");
 
                 lobby.changePlayerState(playerID, PlayerState.UNREADY);
+                player.state = BlackJackPlayerState.PREPARING;
 
                 waitForPlayerBetMessage(player.Player);
                 setWaitingBar(player);
@@ -290,9 +298,10 @@ public class BlackJack implements Game {
     private void waitingForPlayers() {
         gameState = BlackJackGameState.WAITING;
 
-        croupierLine.setText(ChatColor.WHITE + "-----");
+        gameInformationLine.setText(ChatColor.YELLOW + "Zurzeit kein Spiel im Gange");
+        croupierLine.setText("");
         croupierCardsLine.setText("");
-        playerLine.setText(ChatColor.YELLOW + "Zurzeit kein Spiel im Gange");
+        playerLine.setText("");
         playerCardsLine.setText("");
     }
 
@@ -407,7 +416,8 @@ public class BlackJack implements Game {
                 playerCardsLine.setText("");
             }
         } else {
-            croupierLine.setText(ChatColor.WHITE + "-----");
+            gameInformationLine.setText(ChatColor.YELLOW + "Zurzeit kein Spiel im Gange");
+            croupierLine.setText("");
             croupierCardsLine.setText("");
             playerLine.setText("");
             playerCardsLine.setText("");

@@ -117,7 +117,7 @@ public class Poker implements Game {
     private TextLine playerInformationLine;
 
 
-    public Poker(String name, Location joinBlockPosition, Location mainScreenLocation, int smallBlind, int bigBlind, int minMoney, int minPlayers, int maxPlayers, int turnTime, int preparingTime, double fee) {
+    public Poker(String name, Location joinBlockPosition, Location mainScreenLocation, int smallBlind, int bigBlind, int minMoney, int maxMoney, int minPlayers, int maxPlayers, int turnTime, int preparingTime, double fee) {
         messageWaitingPlayers = new ArrayList<>();
         playerList = new HashMap<>();
         oldPlayerBalance = new HashMap<>();
@@ -132,7 +132,7 @@ public class Poker implements Game {
         // Initialize lobby for the players
         this.lobby = new Lobby(minPlayers, maxPlayers, name);
         this.cardHandler = new PokerCardHandler();
-        this.betHandler = new PokerBetHandler(minMoney, smallBlind, bigBlind, fee);
+        this.betHandler = new PokerBetHandler(minMoney, maxMoney, smallBlind, bigBlind, fee);
 
         gameState = GameState.WAITFORPLAYERS;
 
@@ -224,13 +224,21 @@ public class Poker implements Game {
 
     private void startTurnTime(int playerNumber, int delayInSec) {
         turnCounter = new BukkitRunnable() {
+            int timer = delayInSec;
+
             @Override
             public void run() {
-                if (playerNumber != 0) {
-                    playerList.get(playerNumber).Player.sendMessage(POKER_PREFIX + ChatColor.RED + "Ihre Zeit ist um und der Zug beendet");
-                    playerFold(playerList.get(playerNumber));
+                if (timer <= 0) {
+                    if (playerNumber != 0) {
+                        playerList.get(playerNumber).Player.sendMessage(POKER_PREFIX + ChatColor.RED + "Ihre Zeit ist um und der Zug beendet");
+                        playerFold(playerList.get(playerNumber));
+                    }
+                    nextPlayer();
+                } else {
+                    timer--;
+                    gameInformationLine.setText(ChatColor.YELLOW.toString() + timer + " Sekunden bis zum nächsten Zug");
                 }
-                nextPlayer();
+
             }
         }.runTaskLater(ApatesCasino.getInstance(), (delayInSec * 20L));
     }
@@ -527,14 +535,15 @@ public class Poker implements Game {
     }
 
     private void initHologram(Location screenLocation) {
-        hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), screenLocation.add(0.5, 0.5, 0.5));
+        hologram = HologramsAPI.createHologram(ApatesCasino.getInstance(), screenLocation.add(0.5, 3.5, 0.5));
 
         hologram.insertTextLine(0, ChatColor.BLUE + "Poker: " + lobby.id);
         hologram.insertTextLine(1, ChatColor.WHITE + "-------");
-        gameInformationLine = hologram.insertTextLine(2, ChatColor.YELLOW + "Zurzeit kein Spiel im Gange");
-        potLine = hologram.insertTextLine(3, "");
-        cardLine = hologram.insertTextLine(4, "");
-        playerInformationLine = hologram.insertTextLine(5, "");
+        hologram.insertTextLine(2, "");
+        gameInformationLine = hologram.insertTextLine(3, ChatColor.YELLOW + "Zurzeit kein Spiel im Gange");
+        potLine = hologram.insertTextLine(4, "");
+        cardLine = hologram.insertTextLine(5, "");
+        playerInformationLine = hologram.insertTextLine(6, "");
     }
 
     private void updateHologram() {
@@ -557,6 +566,8 @@ public class Poker implements Game {
 
         // Get unready player with the id and check if the message with the amount of money he will bring to the table is correct and add him to the game
 
+        final String betMessage = POKER_PREFIX + ChatColor.RED + "Geben sie bitte einen passenden Betrag ein (MIN: " + ChatColor.GOLD + betHandler.minMoney + ChatColor.AQUA +
+                " | MAX: " + ChatColor.GOLD + betHandler.maxMoney + ChatColor.AQUA + ")";
         if (messageWaitingPlayers.contains(playerID) && message != null && message.matches("[0-9]+")) {
 
             // Check for acceptable amount of money
@@ -588,10 +599,10 @@ public class Poker implements Game {
                 PokerPlayerProperties playerProperties = getPlayerPropertiesByID(playerID);
                 if (playerProperties != null) setPreparingBar(playerProperties);
             } else {
-                player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie müssen mindestens " + ChatColor.GOLD + betHandler.minMoney + " Tokens" + ChatColor.RED + " zum Tisch mitbringen");
+                player.sendMessage(betMessage);
             }
         } else {
-            player.sendMessage(POKER_PREFIX + ChatColor.RED + "Bitte schreiben sie eine akzeptable Geldmenge, Der Mindesteinsatz lautet: " + ChatColor.GOLD + betHandler.minMoney + " Tokens");
+            player.sendMessage(betMessage);
         }
 
         if (playerList.size() >= minPlayers && gameState == GameState.WAITFORPLAYERS) {
@@ -762,7 +773,7 @@ public class Poker implements Game {
         Economy econ = ApatesCasino.getEconomy();
 
         if (econ.getBalance(player) < betHandler.minMoney) {
-            player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben nicht genügend Geld üm diesem Spiel beizutreten!");
+            player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben nicht genügend Geld üm diesem Spiel beizutreten! (MIN: " + ChatColor.GOLD + betHandler.minMoney + ChatColor.RED + ")");
             return;
         }
 
@@ -771,7 +782,8 @@ public class Poker implements Game {
         lobby.addPlayer(player);
         lobby.changePlayerState(playerID, PlayerState.UNREADY);
 
-        player.sendMessage(POKER_PREFIX + ChatColor.AQUA + "Bitte schreiben sie ihren Geldbetrag den sie zum Tisch bringen wollen");
+        player.sendMessage(POKER_PREFIX + ChatColor.AQUA + "Bitte schreiben sie ihren Geldbetrag den sie zum Tisch bringen wollen (MIN: " + ChatColor.GOLD + betHandler.minMoney + ChatColor.AQUA +
+                " | MAX: " + ChatColor.GOLD + betHandler.maxMoney + ChatColor.AQUA + ")");
         messageWaitingPlayers.add(playerID);
         writeMessageTimer(playerID);
     }
@@ -804,6 +816,6 @@ public class Poker implements Game {
 
     public static Game createGame(PokerConfig config) {
         return new Poker(config.gameID, config.joinBlockPosition.getLocation(), config.MainScreenLocation.getLocation(), config.smallBlind, config.bigBlind,
-                config.minMoney, config.minPlayers, config.maxPlayers, config.turnTime, config.preparingTime, config.fee);
+                config.minMoney, config.maxMoney, config.minPlayers, config.maxPlayers, config.turnTime, config.preparingTime, config.fee);
     }
 }
