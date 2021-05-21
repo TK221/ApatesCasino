@@ -10,6 +10,7 @@ import de.tk.apatescasino.games.ItemStackBuilder;
 import de.tk.apatescasino.games.PlayerState;
 import de.tk.apatescasino.games.cardgames.card.Card;
 import de.tk.apatescasino.games.lobby.Lobby;
+import de.tk.apatescasino.games.utilities.PlayerInventorySaver;
 import de.tk.apatescasino.games.utilities.playerBet;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -240,7 +241,7 @@ public class Poker implements Game {
                 }
 
             }
-        }.runTaskLater(ApatesCasino.getInstance(), (delayInSec * 20L));
+        }.runTaskTimer(ApatesCasino.getInstance(), 0, 20L);
     }
 
 
@@ -288,7 +289,7 @@ public class Poker implements Game {
         playerProperties.State = PlayerPokerState.TURN;
         playerProperties.Player.sendMessage(POKER_PREFIX + ChatColor.GREEN + "Sie sind nun am Zug");
         setActionItemBar(playerProperties);
-        startTurnTime(playerOnTurn, 30);
+        startTurnTime(playerOnTurn, turnTime);
 
         updateHologram();
     }
@@ -596,6 +597,8 @@ public class Poker implements Game {
 
                 player.sendMessage(POKER_PREFIX + ChatColor.GREEN + "Sie sind nun mit " + ChatColor.GOLD + amount + " Tokens" + ChatColor.GREEN + " im Spiel. Bitte warten sie auf den Beginn der nächsten Runde");
 
+                PlayerInventorySaver.addPlayerInventory(player);
+
                 PokerPlayerProperties playerProperties = getPlayerPropertiesByID(playerID);
                 if (playerProperties != null) setPreparingBar(playerProperties);
             } else {
@@ -797,7 +800,9 @@ public class Poker implements Game {
             if (playerProperties.Player != null) {
                 ApatesCasino.getEconomy().depositPlayer(playerProperties.Player, playerProperties.bet.getMoney());
                 clearHotBar(playerProperties);
+
                 playerProperties.Player.sendMessage(POKER_PREFIX + ChatColor.RED + "Sie haben das Spiel verlassen");
+                PlayerInventorySaver.setPlayerInventory(playerProperties.Player);
             }
 
             playerList.remove(playerProperties.playerNumber);

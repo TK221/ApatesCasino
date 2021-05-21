@@ -24,7 +24,7 @@ public class PlayerInventorySaver {
         PlayerInventory playerInventory = player.getInventory();
 
         ItemStack[] inventory = playerInventoryMap.remove(player.getUniqueId());
-        playerInventory.setContents(inventory);
+        if (inventory != null) playerInventory.setContents(inventory);
 
         playerInventoryMap.put(player.getUniqueId(), inventory);
     }

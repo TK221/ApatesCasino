@@ -434,6 +434,9 @@ public class BlackJack implements Game {
 
 
         ApatesCasino.getChatMessageHandler().addExpectedMessage(player, message -> {
+            final String betMessage = BJ_PREFIX + ChatColor.RED + "Geben sie bitte einen passenden Betrag ein " + ChatColor.AQUA + "(MIN: " + ChatColor.GOLD + minBet + ChatColor.AQUA +
+                    " | MAX: " + ChatColor.GOLD + maxBet + ChatColor.AQUA + ")";
+
             if (gameState == BlackJackGameState.PREPARING && blackJackPlayer.getStake() == 0 && message != null && message.matches("[0-9]+")) {
 
                 // Check for acceptable amount of money
@@ -453,14 +456,12 @@ public class BlackJack implements Game {
                         lobby.changePlayerState(player.getUniqueId(), PlayerState.READY);
                     }
                 } else {
-                    player.sendMessage(BJ_PREFIX + ChatColor.RED + "Geben sie bitte einen passenden Betrag ein (MIN: " + ChatColor.GOLD + minBet + ChatColor.AQUA +
-                            " | MAX: " + ChatColor.GOLD + maxBet + ChatColor.AQUA + ")");
+                    player.sendMessage(betMessage);
 
                     waitForPlayerBetMessage(player);
                 }
             } else {
-                player.sendMessage(BJ_PREFIX + ChatColor.RED + "Geben sie bitte einen passenden Betrag ein (MIN: " + ChatColor.GOLD + minBet + ChatColor.AQUA +
-                        " | MAX: " + ChatColor.GOLD + maxBet + ChatColor.AQUA + ")");
+                player.sendMessage(betMessage);
 
                 waitForPlayerBetMessage(player);
             }
