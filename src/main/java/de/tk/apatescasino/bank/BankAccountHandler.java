@@ -24,12 +24,17 @@ public class BankAccountHandler {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("E, dd MMM yyyy HH:mm:ss", Locale.ROOT);
 
     private final Economy econ;
-
     private final UUID ownerID;
+    private final List<UUID> employees;
+
+    private final int minMoney = 200;
 
     public BankAccountHandler(Economy economy) {
         this.econ = economy;
+
         ownerID = UUID.fromString("755dfd18-d3fa-4f7a-a290-9c6db31f2d77");
+        employees = new ArrayList<>();
+        employees.add(UUID.fromString("9cae7835-ca85-424a-b376-287345c4720d"));
 
         if (!econ.getBanks().contains(CASINO_BANK_ACCOUNT)) {
             econ.createBank(CASINO_BANK_ACCOUNT, Bukkit.getOfflinePlayer(ownerID));
@@ -71,14 +76,14 @@ public class BankAccountHandler {
         return (int) econ.bankBalance(CASINO_BANK_ACCOUNT).balance;
     }
 
-    public boolean hasEnoughMoney(int amount) {
-        return econ.bankHas(CASINO_BANK_ACCOUNT, amount).type.equals(EconomyResponse.ResponseType.SUCCESS);
+    public boolean hasEnoughMoney() {
+        return econ.bankHas(CASINO_BANK_ACCOUNT, minMoney).type.equals(EconomyResponse.ResponseType.SUCCESS);
     }
 
     public void writeBalance(Player player) {
         System.out.println(player.getUniqueId() + "  " + ownerID);
 
-        if (!player.getUniqueId().equals(ownerID)) {
+        if (!player.getUniqueId().equals(ownerID) || !employees.contains(player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "Sie sind nicht der Besitzer des Casinos");
             return;
         }
@@ -87,7 +92,7 @@ public class BankAccountHandler {
     }
 
     public void writeLastTransactions(Player player) {
-        if (!player.getUniqueId().equals(ownerID)) {
+        if (!player.getUniqueId().equals(ownerID) || !employees.contains(player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "Sie sind nicht der Besitzer des Casinos");
             return;
         }

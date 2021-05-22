@@ -275,7 +275,16 @@ public class BlackJack implements Game {
             player.resetStake();
         }
 
-        if (playerMap.values().size() >= minPlayers) {
+        if (!bank.hasEnoughMoney()) {
+            for (BlackJackPlayer player : playerMap.values()) {
+                player.resetStake();
+                player.state = BlackJackPlayerState.PREPARING;
+
+                player.Player.sendMessage(BJ_PREFIX + ChatColor.RED + "Das Spiel kann zurzeit nicht vom Casino unterstützt werden.");
+                removePlayer(player.Player.getUniqueId());
+                waitingForPlayers();
+            }
+        } else if (playerMap.values().size() >= minPlayers) {
             for (BlackJackPlayer player : playerMap.values()) {
                 UUID playerID = player.Player.getUniqueId();
 
@@ -519,6 +528,9 @@ public class BlackJack implements Game {
             return;
         } else if (economy.getBalance(player) <= minBet) {
             player.sendMessage(BJ_PREFIX + ChatColor.RED + "Sie haben leider nicht genügend Geld, um diesem Spiel beizutreten");
+            return;
+        } else if (!bank.hasEnoughMoney()) {
+            player.sendMessage(BJ_PREFIX + ChatColor.RED + "Das Casino kann zurzeit dieses Spiel nicht unterstützen. Kommen sie bitte zu einer anderen Zeit wieder");
             return;
         }
 
