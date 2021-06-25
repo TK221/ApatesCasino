@@ -83,7 +83,7 @@ public class BankAccountHandler {
     public void writeBalance(Player player) {
         System.out.println(player.getUniqueId() + "  " + ownerID);
 
-        if (!player.getUniqueId().equals(ownerID) || !employees.contains(player.getUniqueId())) {
+        if (!player.getUniqueId().equals(ownerID) && !employees.contains(player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "Sie sind nicht der Besitzer des Casinos");
             return;
         }
@@ -92,7 +92,7 @@ public class BankAccountHandler {
     }
 
     public void writeLastTransactions(Player player) {
-        if (!player.getUniqueId().equals(ownerID) || !employees.contains(player.getUniqueId())) {
+        if (!player.getUniqueId().equals(ownerID) && !employees.contains(player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "Sie sind nicht der Besitzer des Casinos");
             return;
         }
